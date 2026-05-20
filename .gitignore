@@ -1,0 +1,64 @@
+# ─── Python ─────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+.eggs/
+build/
+dist/
+.installed.cfg
+
+# ─── Virtual Environments ───────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+.python-version
+
+# ─── Jupyter ────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ─── IDE / Editor ───────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# ─── Datasets (large, never commit) ─────────────────────────────────────
+data/raw/**
+data/processed/**
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+*.nt
+*.ttl
+*.rdf
+*.n3
+*.owl
+
+# ─── Generated Results ──────────────────────────────────────────────────
+results/figures/**
+results/reports/**
+!results/figures/.gitkeep
+!results/reports/.gitkeep
+
+# ─── Logs & Caches ──────────────────────────────────────────────────────
+*.log
+.cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ─── Spark / Hadoop ─────────────────────────────────────────────────────
+spark-warehouse/
+metastore_db/
+derby.log
+
+# ─── Secrets / Credentials ──────────────────────────────────────────────
+.env
+*.pem
+credentials.json

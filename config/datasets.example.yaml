@@ -1,0 +1,58 @@
+# ──────────────────────────────────────────────────────────────────────
+#  Pipeline-Konfiguration · kg-quality-eval
+#  Dieses Beispiel zeigt die finale 8-Datensatz-Auswahl.
+#  Pfade beziehen sich auf Datasets unter data/raw/ (lokal, nicht versioniert).
+# ──────────────────────────────────────────────────────────────────────
+
+project: kg-quality-eval
+output_dir: results/reports
+
+datasets:
+  # ─── OpenEA-Familie (6) ─────────────────────────────────────────────
+  - name: openea_en_fr_15k_v1
+    loader: openea
+    path: data/raw/openea/EN_FR_15K_V1
+
+  - name: openea_en_fr_15k_v2
+    loader: openea
+    path: data/raw/openea/EN_FR_15K_V2
+
+  - name: openea_en_de_15k_v1
+    loader: openea
+    path: data/raw/openea/EN_DE_15K_V1
+
+  - name: openea_d_w_15k_v1
+    loader: openea
+    path: data/raw/openea/D_W_15K_V1
+
+  - name: openea_d_y_15k_v1
+    loader: openea
+    path: data/raw/openea/D_Y_15K_V1
+
+  - name: openea_en_fr_100k_v1
+    loader: openea
+    path: data/raw/openea/EN_FR_100K_V1
+
+  # ─── OAEI Conference (1) ────────────────────────────────────────────
+  # - name: oaei_conference
+  #   loader: rdf                # Loader in Phase 2 implementieren
+  #   path: data/raw/oaei/conference
+
+  # ─── Custom DBpedia ↔ Wikidata (1) ──────────────────────────────────
+  # - name: custom_dbp_wiki
+  #   loader: custom             # Loader in Phase 5 implementieren
+  #   path: data/processed/custom_dbp_wiki
+
+metrics:
+  - basic_stats
+  # - degree_distribution        # Phase 3
+  # - property_distribution      # Phase 3
+  # - connectivity               # Phase 3
+  # - attribute_completeness     # Phase 4
+  # - type_distribution          # Phase 4
+  # - alignment_metrics          # Phase 4
+
+backend:
+  mode: auto                     # auto | pandas | spark
+  spark_master: local[*]
+  spark_memory: 4g
