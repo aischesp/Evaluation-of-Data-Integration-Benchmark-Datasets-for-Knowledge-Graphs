@@ -8,11 +8,13 @@ betreuer: "Marvin Hofer"
 
 # 1. Thema
 
-Das Dokument beschreibt den konzeptionellen Entwurf eines Python-Frameworks, mit dem wir Knowledge-Graph-Benchmark-Datensätze für Entity Alignment systematisch auf ihre Qualität untersuchen. Wir legen die zu berechnenden Basis-, Struktur- und Qualitätsmetriken fest, beschreiben Aufbau und Datenfluss der Anwendung (Pandas und PySpark) und begründen die Auswahl der acht Datensätze, auf denen das Framework anschließend evaluiert wird.
+Das Dokument beschreibt den konzeptionellen Entwurf eines Python-Frameworks, mit dem wir Knowledge-Graph-Benchmark-Datensätze für Entity Alignment systematisch auf ihre Qualität untersuchen. Wir legen die zu berechnenden Basis-, Struktur- und Qualitätsmetriken fest, beschreiben Aufbau und Datenfluss der Anwendung (Pandas und PySpark) und begründen die Auswahl der sieben Datensätze, auf denen das Framework anschließend evaluiert wird.
+
+Das gesamte Projekt ist verfügbar unter <https://github.com/aischesp/Evaluation-of-Data-Integration-Benchmark-Datasets-for-Knowledge-Graphs.git>.
 
 # 2. Motivation
 
-Beim Aufbau integrierter Knowledge Graphs (KGs) spielt Entity Alignment eine zentrale Rolle: Entitäten aus verschiedenen Datenquellen, die dasselbe Realweltobjekt beschreiben, müssen erkannt und zusammengeführt werden. Um entsprechende Verfahren zu evaluieren, gibt es eine wachsende Zahl von Benchmark-Datensätzen, die jeweils zwei oder mehr KGs zusammen mit einem Referenz-Alignment bündeln. Übliche Quellen sind OpenEA [1, 2], OAEI [3] sowie kuratierte Subsets aus DBpedia, Wikidata und YAGO.
+Beim Aufbau integrierter Knowledge Graphs (KGs) spielt Entity Alignment eine zentrale Rolle: Entitäten aus verschiedenen Datenquellen, die dasselbe Realweltobjekt beschreiben, müssen erkannt und zusammengeführt werden. Um entsprechende Verfahren zu evaluieren, gibt es eine wachsende Zahl von Benchmark-Datensätzen, die jeweils zwei oder mehr KGs zusammen mit einem Referenz-Alignment bündeln. Übliche Quellen sind OpenEA [1, 2] und OAEI [3].
 
 Die Aussagekraft eines Benchmarks hängt allerdings stark von seinen Eigenschaften ab. Ist der Graph dicht oder fragmentiert? Wie groß ist der Long-Tail an Entitäten mit nur ein bis zwei Tripeln? Sind die zwei verglichenen KGs schematisch ähnlich, oder weichen die Properties stark voneinander ab? Welcher Anteil der Alignments ist eindeutig, welcher mehrdeutig? Solche Größen bestimmen, ob ein Verfahren auf einem Benchmark überhaupt erfolgreich sein kann, und sie machen Ergebnisse über mehrere Benchmarks hinweg vergleichbar. In den Datensatzbeschreibungen werden sie trotzdem kaum dokumentiert. Mit unserem Framework wollen wir hier ansetzen.
 
@@ -22,7 +24,7 @@ Unser Ziel ist ein Python-Framework, das die genannten Eigenschaften reproduzier
 
 - Heterogene Eingabeformate (OpenEA-Tripel, RDF/OWL, CSV, eigene Subsets) in eine einheitliche interne Repräsentation überführen.
 - Einen Katalog aus Basis-Statistiken, strukturellen und qualitativen Metriken konzipieren und implementieren.
-- Die Berechnung skalierbar gestalten, sodass kleine Datensätze (~15 K Entitäten) lokal in Pandas laufen, größere Varianten (~100 K und mehr) in PySpark.
+- Die Berechnung skalierbar gestalten, sodass kleine Datensätze (15 K Entitäten) lokal in Pandas laufen, größere Varianten (100 K) in PySpark.
 - Ergebnisse vergleichend darstellen, sowohl pro Datensatz als auch in einer aggregierten Übersicht.
 
 # 4. Auswahl der Benchmark-Datensätze
@@ -39,7 +41,7 @@ Wir betrachten sieben Datensätze und wählen sie entlang von Größe, Sprache, 
 | 6  | OpenEA `EN_FR_100K_V1`   | 200 K   | ~650 K   | Skalierungsvergleich, Spark                        |
 | 7  | OAEI Conference          | ~150    | ~600     | OWL-Format, sehr klein, Sanity-Check               |
 
-*Tabelle 1. Übersicht der acht Benchmark-Datensätze*
+*Tabelle 1. Übersicht der sieben Benchmark-Datensätze*
 
 Sechs der sieben Datensätze stammen aus OpenEA, da OpenEA als De-facto-Standard ein einheitliches Tab-getrenntes Format und vorbereitete Train/Valid/Test-Splits liefert. Innerhalb dieser Familie isolieren wir paarweise eine Variable: V1 gegen V2 zeigt den Effekt der Dichte, EN-FR gegen EN-DE den der Sprache, D-W gegen D-Y die Schema-Heterogenität, 15K gegen 100K die Skalierung. Ergänzend nehmen wir den OAEI Conference Track (OWL-Format, sehr kleiner Graph) als Edge-Case auf.
 
