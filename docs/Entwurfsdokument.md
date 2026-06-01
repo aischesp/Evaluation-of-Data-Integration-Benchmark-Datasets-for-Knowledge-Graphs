@@ -109,7 +109,7 @@ Wir implementieren in Python 3.11 mit Pandas 2 und PySpark 3.5 für die Tabellen
 | 2     | KW 23–24   | OpenEA- und RDF-Loader, Pandas-Backend, Basis-Statistiken       |
 | 3     | KW 25–26   | Strukturelle Metriken, erste Plots                              |
 | 4     | KW 27–28   | Qualitätsmetriken (Attribut-Coverage, Alignment)                |
-| 5     | KW 27–28   | PySpark-Backend, 100K-Datensatz, Custom-Sampling                |
+| 5     | KW 27–28   | PySpark-Backend, 100K-Datensatz                                 |
 | 6     | KW 29      | Reporting, Comparison-Table, Testat 2                           |
 | 7     | KW 30–35   | Evaluation, schriftliche Auswertung                             |
 | 8     | tbd        | Testat 3 (Abschlusspräsentation)                                |
