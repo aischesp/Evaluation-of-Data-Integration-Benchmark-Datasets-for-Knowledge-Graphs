@@ -22,7 +22,7 @@ Die Aussagekraft eines Benchmarks hängt allerdings stark von seinen Eigenschaft
 
 Unser Ziel ist ein Python-Framework, das die genannten Eigenschaften reproduzierbar über mehrere Benchmark-Datensätze hinweg berechnet, exportiert und vergleichbar macht. Daraus ergeben sich vier zusammenhängende Aufgaben:
 
-- Heterogene Eingabeformate (OpenEA-Tripel, RDF/OWL, CSV, eigene Subsets) in eine einheitliche interne Repräsentation überführen.
+- Heterogene Eingabeformate (OpenEA-Tripel, RDF/OWL, CSV) in eine einheitliche interne Repräsentation überführen.
 - Einen Katalog aus Basis-Statistiken, strukturellen und qualitativen Metriken konzipieren und implementieren.
 - Die Berechnung skalierbar gestalten, sodass kleine Datensätze (15 K Entitäten) lokal in Pandas laufen, größere Varianten (100 K) in PySpark.
 - Ergebnisse vergleichend darstellen, sowohl pro Datensatz als auch in einer aggregierten Übersicht.

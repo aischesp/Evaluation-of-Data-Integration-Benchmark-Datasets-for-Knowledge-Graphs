@@ -2,7 +2,7 @@
 
 ## 1. Auswahlkriterien
 
-Wir wählen 8 Datensätze entlang folgender Dimensionen, damit unser Framework auf der gesamten Bandbreite realistischer Benchmarks evaluiert werden kann:
+Wir wählen 7 Datensätze entlang folgender Dimensionen, damit unser Framework auf der gesamten Bandbreite realistischer Benchmarks evaluiert werden kann:
 
 | Dimension                  | Spannweite, die wir abdecken                    |
 | -------------------------- | ----------------------------------------------- |
@@ -13,7 +13,7 @@ Wir wählen 8 Datensätze entlang folgender Dimensionen, damit unser Framework a
 | **Schema-Heterogenität**   | homogen (DBpedia↔DBpedia) bis heterogen (D-W, D-Y) |
 | **Alignment-Eigenschaften**| Anteil aligned Entitäten, 1:1 vs. 1:n          |
 
-## 2. Endgültige Auswahl (8 Datensätze)
+## 2. Endgültige Auswahl (7 Datensätze)
 
 ### 2.1 OpenEA-Familie (6 Datensätze)
 
@@ -39,15 +39,6 @@ OpenEA [1] ist der **De-facto-Standard** für Entity-Alignment-Benchmarks. Vorte
 - **Zweck**: Sanity-Check + Edge-Case (kleiner Graph, OWL-Ontologie statt RDF-Tripel)
 - **Format-Vielfalt**: OWL/XML — fordert unseren RDF-Loader heraus
 
-### 2.3 Eigener DBpedia ↔ Wikidata-Subset (1 Datensatz)
-
-- **Größe**: ~10 K Entitäten
-- **Generierung**: Sampling aus aktuellen DBpedia- und Wikidata-Dumps (Frühjahr 2026) über `sameAs`-Links
-- **Zweck**: 
-  - aktuelle Daten (OpenEA basiert auf 2016er DBpedia-Dump!)
-  - **eigener** Daten­erzeugungs­prozess als Methodik-Demo
-  - Test der **End-to-End-Pipeline**, inkl. Custom-Loader
-
 ## 3. Diversität der Auswahl (Tabellarische Übersicht)
 
 | #  | Datensatz                | # Ent.  | # Tripel | # Align. | Sprache    | Quellen          | Dichte |
@@ -59,9 +50,8 @@ OpenEA [1] ist der **De-facto-Standard** für Entity-Alignment-Benchmarks. Vorte
 | 5  | OpenEA `D_Y_15K_V1`      | 30 K    | ~91 K    | 15 K     | mono       | DBpedia, YAGO    | sparse |
 | 6  | OpenEA `EN_FR_100K_V1`   | 200 K   | ~650 K   | 100 K    | EN ↔ FR    | DBpedia          | sparse |
 | 7  | OAEI Conference          | ~150    | ~600     | ~50      | EN         | mehrere Onto.    | n/a    |
-| 8  | Custom DBp↔Wiki Subset   | ~10 K   | TBD      | ~5 K     | mono       | DBpedia, Wikidata| TBD    |
 
-(Werte für OpenEA aus Sun et al. 2020 [2]; Werte für #7/#8 nach erster Generierung verifizieren.)
+(Werte für OpenEA aus Sun et al. 2020 [2]; Werte für #7 nach erster Generierung verifizieren.)
 
 ## 4. Erwarteter Mehrwert der Diversität
 
@@ -70,7 +60,6 @@ OpenEA [1] ist der **De-facto-Standard** für Entity-Alignment-Benchmarks. Vorte
 - **#4 vs. #5**: **Schema-Heterogenität** Wikidata (flach, viele Properties) vs. YAGO (tiefe Typ-Hierarchie)
 - **#1 vs. #6**: **Skalierungs­vergleich** 15 K → 100 K (Pandas → PySpark)
 - **#7** als Sonderfall: testet Loader-Robustheit bei OWL-Format
-- **#8**: aktuelle Daten, demonstriert komplette Pipeline incl. Sampling
 
 ## 5. Bezug der Daten
 
@@ -78,7 +67,6 @@ OpenEA [1] ist der **De-facto-Standard** für Entity-Alignment-Benchmarks. Vorte
 | ----- | ------------------------------------------------------------------------------ |
 | 1-6   | <https://github.com/nju-websoft/OpenEA> → `OpenEA_dataset_v2.0.zip` (~1.1 GB) |
 | 7     | <https://oaei.ontologymatching.org/2023/conference/index.html>                |
-| 8     | DBpedia Snapshot 2026, Wikidata Truthy-Dump → eigenes Sampling-Skript         |
 
 ## 6. Quellen
 

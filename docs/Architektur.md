@@ -7,7 +7,7 @@
 | **Modularität**            | Loader, Metriken, Reporting unabhängig austauschbar (Plugin-Architektur)                          |
 | **Skalierbarkeit**         | identische Metrik-Logik auf Pandas (klein) und PySpark (groß) — selber Code, anderes Backend       |
 | **Reproduzierbarkeit**     | Konfiguration via YAML, deterministische Outputs (JSON/CSV), Seeds dokumentiert                    |
-| **Vergleichbarkeit**       | Einheitliches internes Datenmodell ⇒ direkter Vergleich der 8 Datensätze                          |
+| **Vergleichbarkeit**       | Einheitliches internes Datenmodell ⇒ direkter Vergleich der 7 Datensätze                          |
 | **Erweiterbarkeit**        | neue Metriken/Loader via Subclassing eines Interfaces — kein Eingriff in Pipeline-Core             |
 
 ---
@@ -17,7 +17,7 @@
 ```mermaid
 flowchart TB
     A[(Konfiguration<br/>config.yaml)] --> B
-    B[Dataset-Loader<br/>OpenEALoader · RDFLoader · CSVLoader · CustomLoader] --> C
+    B[Dataset-Loader<br/>OpenEALoader · RDFLoader · CSVLoader] --> C
     C[Unified Internal Representation<br/>entities · rel_triples · attr_triples · alignments]
     C --> D[Preprocessing<br/>Cleaning · Normalisierung · Validierung]
     D --> E[Backend-Selector<br/>Pandas oder PySpark]
@@ -68,8 +68,7 @@ src/kg_quality_eval/
 │   ├── base.py             ← abstract BaseLoader
 │   ├── openea.py           ← OpenEA-Format
 │   ├── rdf.py              ← RDF/OWL via rdflib
-│   ├── csv.py              ← einfaches CSV
-│   └── custom.py           ← unsere DBpedia↔Wikidata-Pipeline
+│   └── csv.py              ← einfaches CSV
 ├── preprocessing/
 │   ├── cleaning.py         ← URI-Normalisierung, Encoding
 │   └── validation.py       ← Schema-Checks
@@ -148,7 +147,7 @@ def pick_backend(n_triples: int, force: str | None = None) -> Backend:
 **Gründe:**
 
 - **Pandas** ist für < 1 M Tripel deutlich schneller (kein JVM-Overhead) und einfacher zu debuggen.
-- **PySpark** wird für die 100K-Variante und das eigene Custom-Sampling genutzt — demonstriert Big-Data-Aspekt.
+- **PySpark** wird für die 100K-Variante genutzt — demonstriert Big-Data-Aspekt.
 - Die Backend-Schnittstelle (`groupby_count`, `join`, `histogram`) abstrahiert Frame-Operationen — Metric-Code bleibt identisch.
 
 ---
@@ -195,10 +194,7 @@ datasets:
   - name: openea_en_fr_15k_v2
     loader: openea
     path: data/raw/openea/EN_FR_15K_V2
-  # … 6 weitere
-  - name: custom_dbp_wiki
-    loader: custom
-    path: data/processed/custom_dbp_wiki
+  # … 5 weitere
 
 metrics:
   - basic_stats
@@ -246,6 +242,5 @@ Power-Law-Fit und Connectivity (Sect. 2.3) sind die teuersten Operationen — Co
 | --------------------------------------------------- | -------------------------------------------------------------- |
 | OpenEA-Download (1.1 GB) zu groß für Repo           | nicht ins Repo; Setup-Skript lädt nach `data/raw/`             |
 | PySpark-Setup macht auf macOS Probleme              | Docker-Image als Fallback dokumentieren                        |
-| Custom-DBpedia-Wikidata-Sampling zu komplex         | als optional markieren — bei Zeitdruck weglassen               |
 | Power-Law-Fit instabil bei kleinen KGs              | nur ab N ≥ 1000 Entitäten anwenden                             |
 | OAEI im OWL-Format ⇒ rdflib-Parsing kann scheitern  | Fallback: vorab via Tool (Protégé) zu N-Triples konvertieren    |

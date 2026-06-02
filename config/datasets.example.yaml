@@ -34,10 +34,6 @@ datasets:
   #   loader: rdf
   #   path: data/raw/oaei/conference
 
-  # Custom DBpedia <-> Wikidata subset (loader TBD)
-  # - name: custom_dbp_wiki
-  #   loader: custom
-  #   path: data/processed/custom_dbp_wiki
 
 metrics:
   - basic_stats

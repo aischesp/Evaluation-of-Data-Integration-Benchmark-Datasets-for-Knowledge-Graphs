@@ -6,12 +6,12 @@ Bearbeitet von Aische Vera Spieker und Berkay Ethem Özcekic.
 
 ## Idee
 
-Wir bauen ein Python-Framework, das die Qualität von Knowledge-Graph-Benchmark-Datensätzen für Entity Alignment systematisch analysiert. Quellen sind unter anderem OpenEA, OAEI sowie eigene Subsets aus DBpedia und Wikidata. Eigenschaften wie Graphgröße, Degree-Verteilung, Attribut-Vollständigkeit oder Alignment-Dichte werden in den Benchmarks selten dokumentiert, beeinflussen Modellgüte und Vergleichbarkeit aber stark. Ziel ist, diese Größen reproduzierbar zu berechnen und Benchmarks gegenüberstellen zu können.
+Wir bauen ein Python-Framework, das die Qualität von Knowledge-Graph-Benchmark-Datensätzen für Entity Alignment systematisch analysiert. Quellen sind unter anderem OpenEA und OAEI. Eigenschaften wie Graphgröße, Degree-Verteilung, Attribut-Vollständigkeit oder Alignment-Dichte werden in den Benchmarks selten dokumentiert, beeinflussen Modellgüte und Vergleichbarkeit aber stark. Ziel ist, diese Größen reproduzierbar zu berechnen und Benchmarks gegenüberstellen zu können.
 
 ## Ergebnis pro Praktikumsphase
 
 1. Konzeptioneller Entwurf (Testat 1, Ende Mai) — `docs/Entwurfsdokument.md`.
-2. Implementierung (Testat 2, Mitte/Ende Juli) — lauffähiges Framework auf 8 Datensätzen.
+2. Implementierung (Testat 2, Mitte/Ende Juli) — lauffähiges Framework auf 7 Datensätzen.
 3. Abschlusspräsentation (Testat 3, August/September).
 
 ## Repository
@@ -29,7 +29,7 @@ tests/               Unit-Tests
 
 ## Datensätze
 
-Wir planen acht Benchmarks mit unterschiedlicher Größe, Sprache und Schema-Heterogenität. Begründung der Auswahl in `docs/Datensaetze.md`.
+Wir planen sieben Benchmarks mit unterschiedlicher Größe, Sprache und Schema-Heterogenität. Begründung der Auswahl in `docs/Datensaetze.md`.
 
 | Datensatz                | Quelle  | Skala  | Charakter                                    |
 | ------------------------ | ------- | ------ | -------------------------------------------- |
@@ -40,7 +40,6 @@ Wir planen acht Benchmarks mit unterschiedlicher Größe, Sprache und Schema-Het
 | OpenEA D_Y_15K V1        | OpenEA  | 15K    | DBpedia, YAGO                                |
 | OpenEA EN_FR_100K V1     | OpenEA  | 100K   | Skalierungsvergleich, Spark                  |
 | OAEI Conference          | OAEI    | ~150   | Ontologie-Matching, sehr klein               |
-| Custom DBpedia, Wikidata | eigen   | ~10K   | aktueller Dump                               |
 
 ## Metriken (Kurzform)
 
