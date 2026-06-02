@@ -1,8 +1,12 @@
 # Metriken-Katalog
 
+<<<<<<< HEAD
 > Vollständige Definition aller Metriken, die unser Framework berechnen soll.
 > Strukturierung in 3 Gruppen: **Basis-Statistiken**, **Strukturelle Metriken**, **Qualitätsmetriken**.
 > Stand: 2026-05-20
+=======
+Definition aller Metriken, die das Framework berechnet, gegliedert in Basis-Statistiken, strukturelle Metriken und Qualitätsmetriken.
+>>>>>>> 3a734701cb91d3adf12ec1c972eb9a4496fe7468
 
 ## Notation
 
@@ -187,6 +191,7 @@ Ein zentrales `results/reports/comparison.csv` enthält **alle Metriken über al
 
 ---
 
+<<<<<<< HEAD
 ## 5. Priorisierung (MoSCoW) für Testat 2
 
 | Priorität | Metriken                                                              |
@@ -195,6 +200,14 @@ Ein zentrales `results/reports/comparison.csv` enthält **alle Metriken über al
 | **Should**| 2.2, 2.3, 3.1, 3.4 (Alignment-Metriken komplett)                      |
 | **Could** | 3.2, 3.3, 3.5 (degree-Konsistenz reicht), 3.6                         |
 | **Won't** | Path-Length, vollständige Attribut-Wert-Distanzen (zu teuer)          |
+=======
+## 5. Priorisierung für Testat 2
+
+Pflicht für die erste Implementierung sind Abschnitt 1 und die Degree-Verteilung aus 2.1.
+Hochrangig danach: Property-Verteilung (2.2), Connectivity (2.3), Attribut-Vollständigkeit (3.1) und die Alignment-Metriken (3.4).
+Optional, abhängig vom Zeitbudget: Typen-Verteilung (3.2), Long-Tail (3.3), Konsistenz aligned Entitäten (3.5), Schema-Heterogenität (3.6).
+Explizit ausgeklammert: Path-Length-Berechnungen und vollständige paarweise Attribut-Wert-Distanzen — zu teuer auf 100K-Graphen.
+>>>>>>> 3a734701cb91d3adf12ec1c972eb9a4496fe7468
 
 ---
 

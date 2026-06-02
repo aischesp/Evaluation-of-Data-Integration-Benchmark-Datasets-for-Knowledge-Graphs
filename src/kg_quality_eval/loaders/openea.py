@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 """Loader für das OpenEA-Dateiformat.
 
 Erwartete Verzeichnis-Layout (siehe github.com/nju-websoft/OpenEA):
@@ -13,6 +14,19 @@ Erwartete Verzeichnis-Layout (siehe github.com/nju-websoft/OpenEA):
             ├── train_links
             ├── valid_links
             └── test_links
+=======
+"""OpenEA dataset loader.
+
+Expected directory layout (see github.com/nju-websoft/OpenEA):
+
+    <root>/
+        rel_triples_1     - head TAB relation TAB tail
+        rel_triples_2
+        attr_triples_1    - head TAB attribute TAB literal
+        attr_triples_2
+        ent_links         - e1 TAB e2
+        721_5fold/1/{train,valid,test}_links
+>>>>>>> 3a734701cb91d3adf12ec1c972eb9a4496fe7468
 """
 
 from __future__ import annotations
@@ -35,7 +49,11 @@ class OpenEALoader(BaseLoader):
     def load(self, path: Path) -> KGPair:
         path = Path(path)
         if not path.is_dir():
+<<<<<<< HEAD
             raise FileNotFoundError(f"Kein OpenEA-Verzeichnis: {path}")
+=======
+            raise FileNotFoundError(f"Not an OpenEA directory: {path}")
+>>>>>>> 3a734701cb91d3adf12ec1c972eb9a4496fe7468
 
         kg1 = self._load_kg(name=f"{path.name}__kg1", rel_file=path / "rel_triples_1", attr_file=path / "attr_triples_1")
         kg2 = self._load_kg(name=f"{path.name}__kg2", rel_file=path / "rel_triples_2", attr_file=path / "attr_triples_2")
@@ -71,7 +89,11 @@ class OpenEALoader(BaseLoader):
             test = _read_align(fold_dir / "test_links", "test")
             return pd.concat([train, valid, test], ignore_index=True)
 
+<<<<<<< HEAD
         # Fallback: nur ent_links vorhanden (kein Split)
+=======
+        # fall back to ent_links (no split available)
+>>>>>>> 3a734701cb91d3adf12ec1c972eb9a4496fe7468
         return _read_align(path / "ent_links", "all")
 
 
@@ -84,10 +106,16 @@ def _read_align(file: Path, split: str) -> pd.DataFrame:
 
 
 def _infer_datatype(literal: str) -> str:
+<<<<<<< HEAD
     """Sehr leichte Datentyp-Inferenz aus dem Literal-String.
 
     Für vollständige Inferenz wäre rdflib nötig — hier reicht eine Heuristik für die
     Coverage-Metrik.
+=======
+    """Light-weight datatype inference from the literal string.
+
+    Good enough for coverage metrics; for full RDF semantics use rdflib.
+>>>>>>> 3a734701cb91d3adf12ec1c972eb9a4496fe7468
     """
     if not literal:
         return "empty"

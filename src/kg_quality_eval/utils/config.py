@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 """YAML-Konfigurations-Loader."""
+=======
+"""YAML config loader."""
+>>>>>>> 3a734701cb91d3adf12ec1c972eb9a4496fe7468
 
 from __future__ import annotations
 

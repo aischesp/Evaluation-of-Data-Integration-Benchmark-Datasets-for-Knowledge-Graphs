@@ -1,7 +1,10 @@
 # Auswahl der Benchmark-Datensätze
 
+<<<<<<< HEAD
 > Verantwortlich: Aische & Berkay · Stand: 2026-05-20
 
+=======
+>>>>>>> 3a734701cb91d3adf12ec1c972eb9a4496fe7468
 ## 1. Auswahlkriterien
 
 Wir wählen 8 Datensätze entlang folgender Dimensionen, damit unser Framework auf der gesamten Bandbreite realistischer Benchmarks evaluiert werden kann:
@@ -82,6 +85,7 @@ OpenEA [1] ist der **De-facto-Standard** für Entity-Alignment-Benchmarks. Vorte
 | 7     | <https://oaei.ontologymatching.org/2023/conference/index.html>                |
 | 8     | DBpedia Snapshot 2026, Wikidata Truthy-Dump → eigenes Sampling-Skript         |
 
+<<<<<<< HEAD
 ## 6. Offene Punkte
 
 - [ ] OpenEA-Zip lokal herunterladen und nach `data/raw/openea/` entpacken
@@ -91,6 +95,9 @@ OpenEA [1] ist der **De-facto-Standard** für Entity-Alignment-Benchmarks. Vorte
 - [ ] Mit Hofer abklären: reichen 6 OpenEA-Varianten, oder lieber mehr Diversität jenseits von OpenEA?
 
 ## 7. Quellen
+=======
+## 6. Quellen
+>>>>>>> 3a734701cb91d3adf12ec1c972eb9a4496fe7468
 
 - [1] Sun, Hu, Li (2017): *Cross-lingual Entity Alignment via Joint Attribute-Preserving Embedding*. arXiv:1708.05045.
 - [2] Sun et al. (2020): *A Benchmarking Study of Embedding-based Entity Alignment for KGs*. PVLDB 13(11).

@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # ─── Python ─────────────────────────────────────────────────────────────
+=======
+# Python
+>>>>>>> 3a734701cb91d3adf12ec1c972eb9a4496fe7468
 __pycache__/
 *.py[cod]
 *$py.class
@@ -11,25 +15,41 @@ build/
 dist/
 .installed.cfg
 
+<<<<<<< HEAD
 # ─── Virtual Environments ───────────────────────────────────────────────
+=======
+# Virtual environments
+>>>>>>> 3a734701cb91d3adf12ec1c972eb9a4496fe7468
 .venv/
 venv/
 env/
 ENV/
 .python-version
 
+<<<<<<< HEAD
 # ─── Jupyter ────────────────────────────────────────────────────────────
 .ipynb_checkpoints/
 *.ipynb_checkpoints
 
 # ─── IDE / Editor ───────────────────────────────────────────────────────
+=======
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# IDE / editor
+>>>>>>> 3a734701cb91d3adf12ec1c972eb9a4496fe7468
 .vscode/
 .idea/
 *.swp
 *.swo
 .DS_Store
 
+<<<<<<< HEAD
 # ─── Datasets (large, never commit) ─────────────────────────────────────
+=======
+# Datasets are large and licensed; never commit
+>>>>>>> 3a734701cb91d3adf12ec1c972eb9a4496fe7468
 data/raw/**
 data/processed/**
 !data/raw/.gitkeep
@@ -40,25 +60,41 @@ data/processed/**
 *.n3
 *.owl
 
+<<<<<<< HEAD
 # ─── Generated Results ──────────────────────────────────────────────────
+=======
+# Generated results
+>>>>>>> 3a734701cb91d3adf12ec1c972eb9a4496fe7468
 results/figures/**
 results/reports/**
 !results/figures/.gitkeep
 !results/reports/.gitkeep
 
+<<<<<<< HEAD
 # ─── Logs & Caches ──────────────────────────────────────────────────────
+=======
+# Logs and caches
+>>>>>>> 3a734701cb91d3adf12ec1c972eb9a4496fe7468
 *.log
 .cache/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 
+<<<<<<< HEAD
 # ─── Spark / Hadoop ─────────────────────────────────────────────────────
+=======
+# Spark / Hadoop
+>>>>>>> 3a734701cb91d3adf12ec1c972eb9a4496fe7468
 spark-warehouse/
 metastore_db/
 derby.log
 
+<<<<<<< HEAD
 # ─── Secrets / Credentials ──────────────────────────────────────────────
+=======
+# Secrets
+>>>>>>> 3a734701cb91d3adf12ec1c972eb9a4496fe7468
 .env
 *.pem
 credentials.json

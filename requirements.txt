@@ -1,8 +1,13 @@
+<<<<<<< HEAD
 # ─── Core Data Processing ──────────────────────────────────────────────
+=======
+# Core
+>>>>>>> 3a734701cb91d3adf12ec1c972eb9a4496fe7468
 pandas>=2.2.0
 numpy>=1.26.0
 pyspark>=3.5.0
 
+<<<<<<< HEAD
 # ─── Knowledge Graph / RDF ─────────────────────────────────────────────
 rdflib>=7.0.0
 
@@ -25,3 +30,26 @@ ipykernel>=6.29.0
 # ─── Code Quality (dev) ────────────────────────────────────────────────
 ruff>=0.4.0
 pytest>=8.0.0
+=======
+# RDF parsing
+rdflib>=7.0.0
+
+# Graph analysis
+networkx>=3.2.0
+
+# Plots
+matplotlib>=3.8.0
+seaborn>=0.13.0
+
+# Config / IO
+pyyaml>=6.0
+tqdm>=4.66.0
+
+# Notebooks
+jupyter>=1.0.0
+ipykernel>=6.29.0
+
+# Dev
+pytest>=8.0.0
+ruff>=0.4.0
+>>>>>>> 3a734701cb91d3adf12ec1c972eb9a4496fe7468

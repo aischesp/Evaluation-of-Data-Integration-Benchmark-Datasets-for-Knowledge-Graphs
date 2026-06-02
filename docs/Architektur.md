@@ -1,7 +1,10 @@
 # Architektur des Quality-Evaluation-Frameworks
 
+<<<<<<< HEAD
 > Stand: 2026-05-20
 
+=======
+>>>>>>> 3a734701cb91d3adf12ec1c972eb9a4496fe7468
 ## 1. Designziele
 
 | Ziel                       | Konkret                                                                                            |

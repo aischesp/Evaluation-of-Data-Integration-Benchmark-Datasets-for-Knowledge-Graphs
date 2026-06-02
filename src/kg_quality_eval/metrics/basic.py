@@ -1,7 +1,11 @@
+<<<<<<< HEAD
 """Basis-Statistiken (Section 1 des Metriken-Katalogs).
 
 Implementiert die einfachsten Größen — eine vollständig funktionsfähige Demo der Pipeline.
 """
+=======
+"""Basic statistics: entity, relation, attribute, triple and alignment counts."""
+>>>>>>> 3a734701cb91d3adf12ec1c972eb9a4496fe7468
 
 from __future__ import annotations
 

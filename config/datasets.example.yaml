@@ -1,14 +1,22 @@
+<<<<<<< HEAD
 # ──────────────────────────────────────────────────────────────────────
 #  Pipeline-Konfiguration · kg-quality-eval
 #  Dieses Beispiel zeigt die finale 8-Datensatz-Auswahl.
 #  Pfade beziehen sich auf Datasets unter data/raw/ (lokal, nicht versioniert).
 # ──────────────────────────────────────────────────────────────────────
+=======
+# Pipeline configuration. Paths point to datasets under data/raw/ (not versioned).
+>>>>>>> 3a734701cb91d3adf12ec1c972eb9a4496fe7468
 
 project: kg-quality-eval
 output_dir: results/reports
 
 datasets:
+<<<<<<< HEAD
   # ─── OpenEA-Familie (6) ─────────────────────────────────────────────
+=======
+  # OpenEA family
+>>>>>>> 3a734701cb91d3adf12ec1c972eb9a4496fe7468
   - name: openea_en_fr_15k_v1
     loader: openea
     path: data/raw/openea/EN_FR_15K_V1
@@ -33,6 +41,7 @@ datasets:
     loader: openea
     path: data/raw/openea/EN_FR_100K_V1
 
+<<<<<<< HEAD
   # ─── OAEI Conference (1) ────────────────────────────────────────────
   # - name: oaei_conference
   #   loader: rdf                # Loader in Phase 2 implementieren
@@ -41,10 +50,21 @@ datasets:
   # ─── Custom DBpedia ↔ Wikidata (1) ──────────────────────────────────
   # - name: custom_dbp_wiki
   #   loader: custom             # Loader in Phase 5 implementieren
+=======
+  # OAEI conference track (loader TBD)
+  # - name: oaei_conference
+  #   loader: rdf
+  #   path: data/raw/oaei/conference
+
+  # Custom DBpedia <-> Wikidata subset (loader TBD)
+  # - name: custom_dbp_wiki
+  #   loader: custom
+>>>>>>> 3a734701cb91d3adf12ec1c972eb9a4496fe7468
   #   path: data/processed/custom_dbp_wiki
 
 metrics:
   - basic_stats
+<<<<<<< HEAD
   # - degree_distribution        # Phase 3
   # - property_distribution      # Phase 3
   # - connectivity               # Phase 3
@@ -54,5 +74,16 @@ metrics:
 
 backend:
   mode: auto                     # auto | pandas | spark
+=======
+  # - degree_distribution
+  # - property_distribution
+  # - connectivity
+  # - attribute_completeness
+  # - type_distribution
+  # - alignment_metrics
+
+backend:
+  mode: auto         # auto | pandas | spark
+>>>>>>> 3a734701cb91d3adf12ec1c972eb9a4496fe7468
   spark_master: local[*]
   spark_memory: 4g

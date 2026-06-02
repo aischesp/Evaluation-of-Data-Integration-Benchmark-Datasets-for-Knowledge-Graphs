@@ -1,7 +1,13 @@
+<<<<<<< HEAD
 """Unified Internal Representation of a Knowledge-Graph-Alignment-Benchmark.
 
 Alle Loader müssen Output dieser Datenklassen liefern, damit Metriken loader-agnostisch
 implementiert werden können.
+=======
+"""Unified internal representation for a KG alignment benchmark.
+
+Every loader returns these dataclasses, so metrics can stay loader-agnostic.
+>>>>>>> 3a734701cb91d3adf12ec1c972eb9a4496fe7468
 """
 
 from __future__ import annotations
@@ -15,7 +21,11 @@ if TYPE_CHECKING:
 
 @dataclass
 class KnowledgeGraph:
+<<<<<<< HEAD
     """Ein einzelner KG innerhalb eines Benchmark-Paars."""
+=======
+    """A single KG within a benchmark pair."""
+>>>>>>> 3a734701cb91d3adf12ec1c972eb9a4496fe7468
 
     name: str
     entities: "pd.DataFrame"      # columns: [entity_uri]
@@ -40,7 +50,11 @@ class KnowledgeGraph:
 
 @dataclass
 class KGPair:
+<<<<<<< HEAD
     """Ein Benchmark-Paar: zwei KGs + Referenz-Alignment."""
+=======
+    """A benchmark pair: two KGs plus the reference alignment."""
+>>>>>>> 3a734701cb91d3adf12ec1c972eb9a4496fe7468
 
     name: str
     kg1: KnowledgeGraph
