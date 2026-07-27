@@ -40,11 +40,21 @@ data/processed/**
 *.n3
 *.owl
 
-# Generated results
-results/figures/**
-results/reports/**
+# Generated results.
+# Die grossen Per-Datensatz-Ausgaben (Histogramme, vorhergesagte Paare, teils
+# > 40 MB) bleiben draussen; die zusammenfassenden Tabellen und die Figures
+# werden versioniert, damit die Ergebnisse ohne Neulauf nachvollziehbar sind.
+results/reports*/**
+!results/reports*/
+!results/reports*/*.csv
+!results/reports*/*.json
+!results/figures*/
+!results/figures*/*.png
 !results/figures/.gitkeep
 !results/reports/.gitkeep
+
+# PARIS-Jar: 3,5 MB, reproduzierbar via scripts/download_data.py
+tools/
 
 # Logs and caches
 *.log

@@ -4,74 +4,146 @@ Big-Data-Praktikum SoSe 2026, Universität Leipzig (Lehrstuhl Datenbanken, Prof.
 Thema 11, Betreuer Marvin Hofer.
 Bearbeitet von Aische Vera Spieker und Berkay Ethem Özcekic.
 
-## Idee
+## Worum es geht
 
-Wir bauen ein Python-Framework, das die Qualität von Knowledge-Graph-Benchmark-Datensätzen für Entity Alignment systematisch analysiert. Quellen sind unter anderem OpenEA und OAEI. Eigenschaften wie Graphgröße, Degree-Verteilung, Attribut-Vollständigkeit oder Alignment-Dichte werden in den Benchmarks selten dokumentiert, beeinflussen Modellgüte und Vergleichbarkeit aber stark. Ziel ist, diese Größen reproduzierbar zu berechnen und Benchmarks gegenüberstellen zu können.
+Entity-Alignment-Verfahren werden auf Benchmark-Datensätzen verglichen, deren
+eigene Eigenschaften kaum dokumentiert sind — Graphgröße, Grad-Verteilung,
+Attribut-Vollständigkeit, Schema-Heterogenität, Beschaffenheit des
+Gold-Standards. Diese Eigenschaften beeinflussen die Ergebnisse aber massiv.
+
+Dieses Projekt baut ein Framework, das
+
+1. Benchmark-Datensätze systematisch **profiliert** (Metriken-Katalog, 11 Metrik-Gruppen),
+2. auf denselben Datensätzen fünf **Entity-Alignment-Matcher** ausführt und bewertet,
+3. beides **korreliert**: welche Datensatz-Eigenschaft erklärt, wie gut welches
+   Verfahren funktioniert?
+
+Schritt 3 ist der eigentliche Beitrag — Profiling allein sagt noch nicht, ob
+ein Benchmark für seine Aufgabe taugt.
 
 ## Ergebnis pro Praktikumsphase
 
-1. Konzeptioneller Entwurf (Testat 1, Ende Mai) — `docs/Entwurfsdokument.md`.
-2. Implementierung (Testat 2, Mitte/Ende Juli) — lauffähiges Framework auf 7 Datensätzen.
-3. Abschlusspräsentation (Testat 3, August/September).
+| Phase | Deliverable | Stand |
+| ----- | ----------- | ----- |
+| Testat 1 — Konzeptioneller Entwurf | `docs/Entwurfsdokument.md` | abgeschlossen |
+| Testat 2 — Implementierung | lauffähige Pipeline, `docs/Ergebnisse.md` | abgeschlossen |
+| Testat 3 — Abschlusspräsentation | `docs/Praesentation.md` | vorbereitet |
 
-## Repository
+Das Feedback aus Testat 1 und seine Umsetzung: `docs/Testat1-Feedback.md`.
 
+## Schnellstart
+
+```bash
+python3.11 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
 ```
-docs/                Konzeptdokumente, Hauptdeliverable für Testat 1
-material/            Aufgabenstellung und Literatur
-src/kg_quality_eval/ Python-Package
-config/              YAML-Konfigurationen
-data/                Datasets (nicht versioniert)
-results/             Outputs (nicht versioniert)
-notebooks/           Explorations-Notebooks
-tests/               Unit-Tests
+
+PARIS und das PySpark-Backend brauchen eine JVM (Java 17):
+
+```bash
+brew install openjdk@17 && export JAVA_HOME=/opt/homebrew/opt/openjdk@17
+```
+
+Daten und PARIS-Jar beschaffen (~240 MB Download, ~700 MB entpackt):
+
+```bash
+python scripts/download_data.py
+```
+
+Vollständiger Lauf über die sechs Kern-Datensätze (~3 Minuten):
+
+```bash
+python -m kg_quality_eval.runner --config config/datasets.yaml
+```
+
+Pandas gegen PySpark verifizieren und die Laufzeiten vergleichen:
+
+```bash
+python scripts/run_backend_benchmark.py --config config/datasets.yaml
+```
+
+Tests:
+
+```bash
+pytest
 ```
 
 ## Datensätze
 
-Wir planen sieben Benchmarks mit unterschiedlicher Größe, Sprache und Schema-Heterogenität. Begründung der Auswahl in `docs/Datensaetze.md`.
+Sechs OpenEA-v2.0-Benchmarks, ausgewählt so, dass sich benachbarte Paare in
+genau einer Dimension unterscheiden (Dichte, Sprache, Quelle, Skala).
+Begründung und Ist-Werte in `docs/Datensaetze.md`.
 
-| Datensatz                | Quelle  | Skala  | Charakter                                    |
-| ------------------------ | ------- | ------ | -------------------------------------------- |
-| OpenEA EN_FR_15K V1      | OpenEA  | 15K    | cross-lingual, sparse                        |
-| OpenEA EN_FR_15K V2      | OpenEA  | 15K    | cross-lingual, dense (Vergleich zu V1)       |
-| OpenEA EN_DE_15K V1      | OpenEA  | 15K    | cross-lingual                                |
-| OpenEA D_W_15K V1        | OpenEA  | 15K    | DBpedia, Wikidata (heterogene Schemata)      |
-| OpenEA D_Y_15K V1        | OpenEA  | 15K    | DBpedia, YAGO                                |
-| OpenEA EN_FR_100K V1     | OpenEA  | 100K   | Skalierungsvergleich, Spark                  |
-| OAEI Conference          | OAEI    | ~150   | Ontologie-Matching, sehr klein               |
+| Datensatz | Quellen | Skala | Rolle |
+| --------- | ------- | ----- | ----- |
+| `EN_FR_15K_V1` | DBpedia EN ↔ FR | 15 K | Referenzpunkt |
+| `EN_FR_15K_V2` | DBpedia EN ↔ FR | 15 K | Dichte-Effekt (V1 vs. V2) |
+| `EN_DE_15K_V1` | DBpedia EN ↔ DE | 15 K | Sprach-Effekt |
+| `D_W_15K_V1` | DBpedia ↔ Wikidata | 15 K | maximale Schema-Heterogenität |
+| `D_Y_15K_V1` | DBpedia ↔ YAGO | 15 K | schmales Ziel-Vokabular |
+| `EN_FR_100K_V1` | DBpedia EN ↔ FR | 100 K | Skalierung |
 
-## Metriken (Kurzform)
+Für die Korrelationsanalyse läuft dieselbe Pipeline zusätzlich über alle 16
+OpenEA-Varianten (`config/datasets_extended.yaml`), damit die Stichprobe nicht
+bei n = 6 bleibt.
 
-- Basis-Statistiken: Entitäten, Relations- und Attribut-Properties, Tripel, Alignments.
-- Strukturelle Metriken: in/out/total-Degree mit Histogrammen und Kennzahlen, Property-Häufigkeit, Connectivity, Power-Law-Fit.
-- Qualitätsmetriken: Attribut-Vollständigkeit, Typen-Verteilung, Long-Tail-Analyse (Gini), Alignment-Coverage und Ambiguität, Konsistenz aligned Entitäten, Schema-Heterogenität.
+Der ursprünglich geplante OAEI-Conference-Track ist nach dem Testat-1-Feedback
+gestrichen: das ist Ontology- und nicht Entity-Alignment.
 
-Vollständige Beschreibung in `docs/Metriken-Katalog.md`.
+## Metriken
+
+11 Metrik-Gruppen, vollständig definiert in `docs/Metriken-Katalog.md`:
+
+- **Basis** — Entitäten, Properties, Tripel, Alignments, Verhältnisse
+- **Strukturell** — Grad-Verteilung inkl. Gini/Power-Law, Property-Verteilung
+  und -Entropie, Connectivity, Long-Tail-Profil
+- **Qualität** — Attribut-Vollständigkeit, Typ-Verteilung,
+  Schema-Heterogenität, Alignment-Eigenschaften, Erreichbarkeit der Gold-Paare,
+  Konsistenz aligned Entitäten
+
+## Matcher
+
+| Matcher | Familie | Signal | Seeds |
+| ------- | ------- | ------ | ----- |
+| `literal_tfidf` | textuell | TF-IDF-Kosinus über Literal-Tokens | nein |
+| `value_overlap` | textuell | Überlappung ganzer Literalwerte | nein |
+| `structural_propagation` | strukturell | Nachbarschaft über Seeds, mit Bootstrapping | ja |
+| `hybrid` | hybrid | Kombination der beiden | ja |
+| `paris` | holistisch | PARIS v0.3 (dig-team), externes Java-Tool | nein |
+
+Bewertet wird auf dem Test-Split (70 %) von Fold 1; Parameter wurden auf dem
+Valid-Split gewählt, nie auf Test.
+
+## Ergebnisse
+
+Kernaussagen in `docs/Ergebnisse.md`, Rohdaten in `results/reports/`, Figures
+in `results/figures/`.
 
 ## Tech-Stack
 
-Python 3.11, Pandas, PySpark 3.5 für die 100K-Variante, rdflib für RDF-/OWL-Parsing, NetworkX für Graph-Analytics, Matplotlib/Seaborn für Plots, PyYAML, pytest.
+Python 3.11 · pandas · NumPy/SciPy · rdflib (N-Triples-Export für PARIS) ·
+NetworkX (Connectivity) · PySpark 4 (zweites Backend für die Kernmetriken) ·
+Matplotlib/Seaborn · PyYAML · pytest/ruff · Java 17 (PARIS, Spark).
 
-## Setup
+## Repository
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-pytest
 ```
-
-Eine Beispielausführung der Pipeline (sobald ein OpenEA-Datensatz unter `data/raw/openea/EN_FR_15K_V1` liegt):
-
-```bash
-python -m kg_quality_eval.runner --config config/datasets.example.yaml --verbose
+config/              YAML-Konfigurationen (Kern + erweitert)
+data/                Datensätze (nicht versioniert, via scripts/download_data.py)
+docs/                Entwurf, Metriken-Katalog, Architektur, Ergebnisse, Präsentation
+material/            Aufgabenstellung und Literatur
+results/             Reports und Figures (nicht versioniert)
+scripts/             Datenbeschaffung, Backend-Benchmark, Config-Generator
+src/kg_quality_eval/ Python-Package
+tests/               Unit-Tests (pytest)
+tools/               PARIS-Jar (nicht versioniert)
 ```
 
 ## Quellen
 
-- Sun, Hu, Li: Cross-lingual Entity Alignment via Joint Attribute-Preserving Embedding. arXiv:1708.05045.
-- Sun et al.: A Benchmarking Study of Embedding-based Entity Alignment for KGs. PVLDB 13(11), 2020.
-- Zhang et al.: An Experimental Study of State-of-the-Art Entity Alignment Approaches. TKDE 2022.
-- Clauset, Shalizi, Newman: Power-Law Distributions in Empirical Data. SIAM Review 51(4), 2009.
-- OpenEA: github.com/nju-websoft/OpenEA. OAEI: oaei.ontologymatching.org.
+- Sun, Hu, Li: *Cross-lingual Entity Alignment via Joint Attribute-Preserving Embedding*. arXiv:1708.05045.
+- Sun et al.: *A Benchmarking Study of Embedding-based Entity Alignment for KGs*. PVLDB 13(11), 2020.
+- Zhang et al.: *An Experimental Study of State-of-the-Art Entity Alignment Approaches*. TKDE, 2022.
+- Suchanek, Abiteboul, Senellart: *PARIS: Probabilistic Alignment of Relations, Instances, and Schema*. PVLDB 5(3), 2011.
+- Clauset, Shalizi, Newman: *Power-Law Distributions in Empirical Data*. SIAM Review 51(4), 2009.
+- OpenEA: <https://github.com/nju-websoft/OpenEA> · PARIS: <https://github.com/dig-team/PARIS>

@@ -1,0 +1,11 @@
+contrast,matcher,level_low,level_high,delta,n_pairs
+density,literal_tfidf,0.207,0.189,-0.018,8
+density,value_overlap,0.475,0.451,-0.024,8
+density,structural_propagation,0.334,0.614,0.28,8
+density,hybrid,0.386,0.55,0.163,8
+density,paris,0.824,0.908,0.084,8
+scale,literal_tfidf,0.223,0.172,-0.052,8
+scale,value_overlap,0.532,0.394,-0.138,8
+scale,structural_propagation,0.499,0.45,-0.049,8
+scale,hybrid,0.52,0.416,-0.104,8
+scale,paris,0.883,0.849,-0.034,8

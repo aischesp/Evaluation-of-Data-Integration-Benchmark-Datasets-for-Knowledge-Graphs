@@ -1,202 +1,239 @@
 # Metriken-Katalog
 
-Definition aller Metriken, die das Framework berechnet, gegliedert in Basis-Statistiken, strukturelle Metriken und Qualitätsmetriken.
+Alle Metriken, die das Framework berechnet. Gegliedert in Basis-Statistiken (§1),
+strukturelle Metriken (§2) und Qualitätsmetriken (§3); §4 beschreibt die
+Matching-Ansätze und ihre Bewertung, §5 das Output-Format.
+
+Jede Metrik ist eine `BaseMetric`-Subklasse in `src/kg_quality_eval/metrics/`
+und wird über ihren Namen in `config/datasets.yaml` aktiviert.
 
 ## Notation
 
-Wir betrachten ein Benchmark-Datensatz-Paar bestehend aus zwei KGs $G_1 = (E_1, R_1, A_1, L_1, T_1^R, T_1^A)$ und $G_2$ mit:
+Ein Benchmark besteht aus zwei KGs $G_i = (E_i, R_i, A_i, L_i, T_i^R, T_i^A)$
+und einem Referenz-Alignment $M \subseteq E_1 \times E_2$:
 
-- $E_i$ = Menge der Entitäten in $KG_i$
-- $R_i$ = Menge der Relations-Properties (rel_triples)
-- $A_i$ = Menge der Attribut-Properties (attr_triples)
-- $L_i$ = Menge der Literale
-- $T_i^R \subseteq E_i \times R_i \times E_i$ = Relations-Tripel
-- $T_i^A \subseteq E_i \times A_i \times L_i$ = Attribut-Tripel
-- $M \subseteq E_1 \times E_2$ = Referenz-Alignment (Gold-Standard)
+| Symbol | Bedeutung |
+| ------ | --------- |
+| $E_i$ | Entitäten in $KG_i$ (inkl. solcher, die nur im Alignment vorkommen) |
+| $R_i$, $A_i$ | Relations- bzw. Attribut-Properties |
+| $L_i$ | Literale |
+| $T_i^R \subseteq E_i \times R_i \times E_i$ | Relations-Tripel |
+| $T_i^A \subseteq E_i \times A_i \times L_i$ | Attribut-Tripel |
+| $M$ | Referenz-Alignment (Gold-Standard) |
 
 ---
 
-## 1. Basis-Statistiken
+## 1. Basis-Statistiken — `basic_stats`
 
-Trivial zu berechnen, geben aber den ersten Eindruck der Größenordnung.
-
-| Kürzel        | Definition                                                    | Relevanz                                                    |
-| ------------- | ------------------------------------------------------------- | ----------------------------------------------------------- |
-| `n_entities`  | $|E_i|$                                                       | Größe des KG, Compute-Bedarf                                |
-| `n_relations` | $|R_i|$                                                       | Schema-Breite (wenige Properties ⇒ dichter Graph je Property) |
-| `n_attributes`| $|A_i|$                                                       | Reichtum der Literal-Information                            |
-| `n_literals`  | $|L_i|$                                                       | Lexikalischer Reichtum                                      |
-| `n_rel_triples` | $|T_i^R|$                                                  | Größe der strukturellen Information                         |
-| `n_attr_triples`| $|T_i^A|$                                                  | Größe der attributiven Information                          |
-| `attr_to_rel_ratio` | $|T_i^A| / |T_i^R|$                                    | DBpedia ≈ 3 (Sun 2017) — fehlt bei vielen Methoden          |
-| `n_alignments`| $|M|$                                                         | Anzahl Gold-Mappings                                        |
-| `alignment_ratio` | $|M| / \min(|E_1|, |E_2|)$                                | wieviel Prozent der Entitäten sind aligned                  |
-
-**Output**: einzeiliges JSON pro Datensatz.
+| Schlüssel | Definition | Warum relevant |
+| --------- | ---------- | -------------- |
+| `n_entities` | $\lvert E_i \rvert$ | Größe, Suchraum, Compute-Bedarf |
+| `n_relations` | $\lvert R_i \rvert$ | Schema-Breite |
+| `n_attributes` | $\lvert A_i \rvert$ | Reichtum der Literal-Information |
+| `n_literals` | $\lvert L_i \rvert$ | Lexikalische Vielfalt |
+| `n_rel_triples` | $\lvert T_i^R \rvert$ | Menge struktureller Information |
+| `n_attr_triples` | $\lvert T_i^A \rvert$ | Menge attributiver Information |
+| `attr_to_rel_ratio` | $\lvert T_i^A \rvert / \lvert T_i^R \rvert$ | Balance Text vs. Struktur |
+| `rel_triples_per_entity` | $\lvert T_i^R \rvert / \lvert E_i \rvert$ | strukturelle Dichte |
+| `alignments.n`, `alignments.ratio` | $\lvert M \rvert$, $\lvert M \rvert / \min(\lvert E_1\rvert,\lvert E_2\rvert)$ | Umfang des Gold-Standards |
+| `pair.size_asymmetry` | relative Differenz $\lvert T_1^R\rvert$ vs. $\lvert T_2^R\rvert$ | einseitig dünne Benchmarks |
 
 ---
 
 ## 2. Strukturelle Metriken
 
-### 2.1 Degree-Verteilungen
+### 2.1 Degree-Verteilung — `degree_distribution`
 
-Für jede Entität $e \in E_i$ berechnen wir:
+Pro Entität: $\text{in-deg}$, $\text{out-deg}$, $\text{total-deg}$ über $T_i^R$.
 
-$$
-\text{in-deg}(e) = |\{(s,r,e) \in T_i^R\}|, \quad
-\text{out-deg}(e) = |\{(e,r,o) \in T_i^R\}|, \quad
-\text{total-deg}(e) = \text{in-deg}(e) + \text{out-deg}(e)
-$$
+| Schlüssel | Definition | Warum relevant |
+| --------- | ---------- | -------------- |
+| `<deg>.mean/median/std/min/max` | Lagemaße | Grundcharakter des Graphen |
+| `<deg>.p25/p75/p95/p99` | Quantile | Verteilungsform ohne Verteilungsannahme |
+| `<deg>.skewness`, `<deg>.kurtosis` | Schiefe, Wölbung | Hub-and-Spoke- bzw. Heavy-Tail-Indikator |
+| `<deg>.gini` | Gini-Koeffizient | 0 = uniform, 1 = alles auf einer Entität |
+| `powerlaw_alpha` | MLE-Schätzer $\alpha$, $P(k)\propto k^{-\alpha}$ | Tail-Schwere; nach Clauset et al. (2009) |
+| `share_isolated` | Anteil mit $\text{deg}=0$ | Obergrenze für strukturelle Matcher |
+| `share_deg_le_2`, `share_deg_le_5` | Anteil strukturell schwacher Entitäten | Embedding-Verfahren brauchen Tripel pro Entität |
+| `pair.min_median_total_degree` | Minimum über beide KGs | der schwächere KG limitiert das Matching |
 
-**Berechnet als:**
+**Output**: `degree_distribution.json`, `degree_distribution.degree_histogram.csv`
+(log-binniertes Histogramm), `degree_distribution.entity_degrees.csv`.
 
-- **Histogramm** (log-skalierte Bins, optimal für Power-Law-Verteilungen)
-- **Kennzahlen**: Mean, Median, Std, Min, Max, 25 %/75 %/95 %/99 %-Quartile
-- **Power-Law-Fit**: $P(\text{deg} = k) \propto k^{-\alpha}$ — Schätzung von $\alpha$ via MLE [Clauset 2009]
+### 2.2 Property-Verteilung — `property_distribution`
 
-**Relevanz (vgl. Meeting-Notes Hofer):**
+Getrennt für Relations- und Attribut-Properties.
 
-> "Embedding-Verfahren brauchen ausreichend viele Tripel pro Entität, um sinnvolle Vektoren zu lernen. Niedriger Median → strukturell schwacher Benchmark."
+| Schlüssel | Definition | Warum relevant |
+| --------- | ---------- | -------------- |
+| `n_properties` | $\lvert R_i \rvert$ bzw. $\lvert A_i \rvert$ | Vokabulargröße |
+| `top10_concentration` | Anteil Tripel auf den 10 häufigsten Properties | Schema-Skewness |
+| `long_tail_share` | Anteil Properties mit $< 1\,\%$ der Tripel | Rausch-Vokabular |
+| `entropy_norm` | Shannon-Entropie / $\log_2 \lvert R_i \rvert$ | 0 = eine Property dominiert, 1 = uniform |
+| `freq.*` | Lagemaße der Häufigkeiten | Verteilungsform |
 
-Sub-Metriken:
+### 2.3 Connectivity — `connectivity`
 
-| Metrik                        | Bemerkung                                                          |
-| ----------------------------- | ------------------------------------------------------------------ |
-| `degree_skewness`             | Schiefe — hohe Werte ⇒ Hub-and-Spoke-Struktur                      |
-| `degree_kurtosis`             | Wölbung — Heavy-Tail-Indikator                                     |
-| `share_isolated` (deg = 0)    | Anteil isolierter Entitäten — würden Embedding sabotieren          |
-| `share_low_deg` (deg ≤ 2)     | Anteil Entitäten mit zu wenigen Tripeln (Daumenregel aus [4])      |
+Ungerichteter Graph über $T_i^R$, via NetworkX.
 
-### 2.2 Property-Frequenz-Verteilungen
+| Schlüssel | Definition |
+| --------- | ---------- |
+| `n_connected_components` | Anzahl Zusammenhangskomponenten |
+| `size_largest_cc`, `share_largest_cc` | Größe und Anteil der größten Komponente |
+| `share_singleton_cc` | Anteil Komponenten der Größe 1 |
+| `density` | $\lvert T^R \rvert / (\lvert E\rvert (\lvert E\rvert-1))$ |
+| `avg_clustering` | mittlerer Clustering-Koeffizient (Stichprobe von 5 000 Knoten ab dieser Größe) |
 
-Für jede Relation $r \in R_i$: Anzahl Tripel mit dieser Property.
+### 2.4 Long-Tail — `long_tail`
 
-- **Histogramm**: Property-Häufigkeit
-- **Long-Tail-Quote**: Anteil Properties, die nur in $< 1\%$ der Tripel vorkommen
-- **Top-k-Konzentration**: Anteil der Tripel, der auf die Top-10-Properties entfällt (Schema-Skewness)
-
-### 2.3 Graph-Connectivity
-
-| Metrik                    | Definition                                                    |
-| ------------------------- | ------------------------------------------------------------- |
-| `n_connected_components`  | Zerfällt der Graph in mehrere Komponenten?                    |
-| `size_largest_cc`         | Anteil Entitäten in der größten Komponente                    |
-| `avg_clustering_coeff`    | NetworkX-Standard (Sub-Sample bei großen Graphen)             |
-| `density`                 | $|T^R| / (|E| \cdot (|E|-1))$ — global density                |
-
-> Berechnung von Clustering & Path-Length nur auf **Sub-Sample** für 100K-Variante (Compute-Kosten!).
+$P_k = \lvert \{e : \text{total-deg}(e) \le k\}\rvert / \lvert E\rvert$ für
+$k \in \{0,1,2,3,5,10,20,50\}$, zusätzlich `share_no_information` (weder
+Relations- noch Attribut-Tripel) und `mean_facts_per_entity`.
 
 ---
 
 ## 3. Qualitätsmetriken
 
-### 3.1 Attribut-Vollständigkeit
+### 3.1 Attribut-Vollständigkeit — `attribute_completeness`
 
-Für jede Attribut-Property $a \in A_i$:
+$\text{cov}(a) = \lvert\{e : (e,a,l) \in T^A\}\rvert / \lvert E\rvert$ pro Property.
 
-$$
-\text{cov}(a) = \frac{|\{e \in E_i : (e, a, l) \in T_i^A \text{ für ein } l\}|}{|E_i|}
-$$
+| Schlüssel | Definition | Warum relevant |
+| --------- | ---------- | -------------- |
+| `share_entities_with_attribute` | Anteil Entitäten mit ≥ 1 Attribut-Tripel | textuelle Matcher können sonst nichts encodieren |
+| `mean_attr_per_entity` | $\lvert T^A\rvert / \lvert E\rvert$ | Informationsdichte |
+| `property_coverage.mean/median/max` | Aggregat über alle Properties | Verteilung der Vollständigkeit |
+| `n_properties_cov_gt_10pct` | Properties mit Coverage > 10 % | Anzahl wirklich nutzbarer Features |
+| `share_literals_text/numeric/date` | Datentyp-Mix | Text ist für Embedding-Matcher nutzbarer als Zahlen |
+| `mean_literal_length` | mittlere Literal-Länge | Länge des encodierbaren Texts |
 
-**Output**:
-- pro Property: Coverage in $[0,1]$
-- aggregiert: Mean / Median Coverage über alle Properties
-- **Heatmap** Property × Entity-Typ (wenn Typ verfügbar)
+### 3.2 Typen-Verteilung — `type_distribution`
 
-**Coverage-Vollständigkeit zwischen zwei KGs** (für aligned Entitäten):
+Sucht Typ-Tripel (`rdf:type`, `wdt:P31`) und misst `n_type_triples`,
+`n_distinct_types`, `share_entities_typed`, `type_entropy_norm`,
+`pair.type_jaccard`.
 
-$$
-\text{attr\_overlap}(a_1, a_2) = \frac{|\{(e_1, e_2) \in M: a_1 \text{ für } e_1 \text{ und } a_2 \text{ für } e_2\}|}{|M|}
-$$
+> **Befund:** Auf den OpenEA-v2.0-Benchmarks ist diese Gruppe faktisch leer
+> (siehe `docs/Ergebnisse.md`). Typ-basierte und ontologie-nutzende
+> Matching-Ansätze sind auf diesen Daten also gar nicht evaluierbar — das ist
+> selbst ein Ergebnis der Benchmark-Bewertung.
 
-Hilft, **Property-Mapping-Lücken** sichtbar zu machen.
+### 3.3 Schema-Heterogenität — `schema_heterogeneity`
 
-### 3.2 Typen-Verteilung (Type Distribution)
+| Schlüssel | Definition |
+| --------- | ---------- |
+| `rel_property_jaccard`, `attr_property_jaccard`, `property_jaccard` | Jaccard der Property-Mengen beider KGs |
+| `property_namespace_jaccard`, `entity_namespace_jaccard` | Jaccard der Namespaces |
+| `n_shared_rel_properties`, `n_shared_attr_properties` | absolute Überlappung |
+| `vocab_size_ratio` | Verhältnis der Vokabulargrößen |
 
-Wenn `rdf:type` o.ä. vorhanden ist:
+### 3.4 Alignment-Metriken — `alignment_metrics`
 
-- **Histogramm der Typen** (Class-Frequenz)
-- **Klassen-Skewness**: dominieren wenige Klassen?
-- **Klassen-Heterogenität** zwischen $G_1$ und $G_2$ (Jaccard auf Typ-Mengen)
-- **Pro aligned Pair**: stimmen die Typen überein? ⇒ `type_consistency_rate`
+| Schlüssel | Definition |
+| --------- | ---------- |
+| `alignment_coverage` | $\lvert M\rvert / \min(\lvert E_1\rvert,\lvert E_2\rvert)$ |
+| `entity_coverage_kg1/kg2` | Anteil Entitäten, die in $M$ vorkommen |
+| `ambiguity_1_to_n`, `ambiguity_n_to_1` | Anteil mehrfach gemappter Entitäten |
+| `bijective_share` | Anteil strikter 1:1-Mappings |
+| `max_fanout_kg1/kg2` | größter Verzweigungsgrad |
+| `candidate_space_log10` | $\log_{10}(\lvert E_1\rvert \cdot \lvert E_2\rvert)$ — Größe des Suchraums |
+| `aligned_degree_bias_kg1/kg2` | mittlerer Grad aligned Entitäten / mittlerer Grad aller — Sampling-Bias des Gold-Standards |
 
-### 3.3 Long-Tail-Analyse
+### 3.5 Alignment-Erreichbarkeit — `alignment_reachability`
 
-Untersucht, wie viele Entitäten *kaum vorkommen*:
+Obergrenze für rein strukturelle Verfahren: `share_aligned_with_edge`,
+`share_aligned_in_lcc`, `share_pairs_both_with_edge`, `share_pairs_both_in_lcc`.
+Ein Gold-Paar, bei dem eine Seite isoliert ist, kann strukturell nicht gefunden
+werden.
 
-- $P_k$: Anteil Entitäten mit Total-Degree ≤ $k$
-- Plot $P_k$ vs. $k$
-- **Power-Law-Fit** auf der Entity-Frequenz-Verteilung (vgl. 2.1)
-- **Gini-Koeffizient** auf Degree-Verteilung ($G = 0$: uniform, $G = 1$: extrem skewed)
+### 3.6 Konsistenz aligned Entitäten — `aligned_consistency`
 
-### 3.4 Alignment-Metriken
+Beschreiben beide Seiten eines Gold-Paars dieselbe Entität vergleichbar?
 
-Eigenständige Gruppe — beschäftigt sich nur mit $M$:
-
-| Metrik                           | Definition / Berechnung                                                                       |
-| -------------------------------- | --------------------------------------------------------------------------------------------- |
-| `alignment_coverage`             | $|M| / \min(|E_1|,|E_2|)$ — siehe Basis-Stats                                                |
-| `entity_coverage_per_kg`         | $\frac{|\{e_1 : (e_1,*) \in M\}|}{|E_1|}$ (und analog für $KG_2$)                            |
-| `ambiguity_1_to_n`               | wie oft $e_1$ auf mehrere $e_2$ mapped → Anteil $e_1$, die in $M$ mehrfach erscheinen        |
-| `ambiguity_n_to_1`               | analog umgekehrt                                                                              |
-| `bijective_share`                | Anteil $M$, die strikt 1:1-Mappings sind                                                      |
-| `mapping_in_largest_cc`          | Liegen aligned Entitäten in der größten verbundenen Komponente?                               |
-
-### 3.5 Konsistenz aligned Entitäten
-
-Für aligned Paare $(e_1, e_2) \in M$:
-
-- **Degree-Konsistenz**: Korrelation $\text{deg}(e_1)$ vs. $\text{deg}(e_2)$ (Spearman/Pearson)
-- **Typ-Konsistenz**: Jaccard auf Typ-Menge von $e_1$ und $e_2$
-- **Attribut-Wert-Konsistenz**: für gleiche Property — Equality / Distanz numerischer Werte / Levenshtein für Strings (Sub-Sample, kostspielig)
-
-### 3.6 Schema-Heterogenität (über die zwei KGs)
-
-| Metrik                | Definition                                                              |
-| --------------------- | ----------------------------------------------------------------------- |
-| `property_jaccard`    | Jaccard($R_1 \cup A_1, R_2 \cup A_2$)                                   |
-| `class_jaccard`       | Jaccard auf Klassen-Mengen (falls Typen extrahierbar)                   |
-| `namespace_overlap`   | Anteil Namespaces, die in beiden KGs vorkommen                         |
-| `vocab_diversity`     | Entropy der Property-Verteilung                                         |
+| Schlüssel | Definition |
+| --------- | ---------- |
+| `degree_pearson`, `degree_spearman` | Korrelation $\text{deg}(e_1)$ vs. $\text{deg}(e_2)$ |
+| `mean_abs_degree_diff`, `abs_degree_diff.*` | Verteilung der Grad-Differenz |
+| `share_pairs_one_side_isolated` | Paare mit isolierter Seite |
+| `attr_count_spearman` | Korrelation der Attribut-Anzahl |
+| `literal_value_jaccard.mean` | mittlerer Jaccard der normalisierten Literalwerte (Stichprobe 5 000 Paare) |
+| `literal_value_containment.mean` | Überlappung relativ zur kleineren Menge |
+| `share_pairs_no_shared_literal` | Paare ganz ohne gemeinsamen Literalwert |
 
 ---
 
-## 4. Output-Format
+## 4. Matching-Ansätze und Bewertung
 
-Pro Datensatz produziert das Framework:
+Die Profilierung allein sagt noch nichts über die Eignung eines Benchmarks.
+Deshalb führt das Framework auf jedem Datensatz zusätzlich fünf
+Entity-Alignment-Verfahren aus und setzt deren Güte in Beziehung zu den
+Metriken oben.
 
-```
-results/reports/<dataset>/
-├── basic_stats.json              ← Section 1
-├── degree_stats.json             ← Section 2.1 (Kennzahlen)
-├── degree_histograms.csv         ← Section 2.1 (Histogramm-Daten)
-├── degree_plot.png               ← Visualisierung
-├── property_stats.csv            ← Section 2.2
-├── connectivity.json             ← Section 2.3
-├── attribute_completeness.csv    ← Section 3.1
-├── type_distribution.csv         ← Section 3.2
-├── alignment_metrics.json        ← Section 3.4
-├── consistency_metrics.json      ← Section 3.5
-├── schema_heterogeneity.json     ← Section 3.6
-└── summary.json                  ← Konsolidiertes Dashboard
-```
+| Matcher | Familie | Genutztes Signal | Seeds | Implementierung |
+| ------- | ------- | ---------------- | ----- | --------------- |
+| `literal_tfidf` | textuell | TF-IDF-Kosinus über Literal-Tokens | nein | `matching/lexical.py` |
+| `value_overlap` | textuell | IDF-gewichtete Überlappung ganzer Literalwerte | nein | `matching/lexical.py` |
+| `structural_propagation` | strukturell | Nachbarschaft über Seeds propagiert, mit Bootstrapping | ja | `matching/structural.py` |
+| `hybrid` | hybrid | Linearkombination textuell + strukturell | ja | `matching/structural.py` |
+| `paris` | holistisch | externes Java-Tool (dig-team/PARIS v0.3), Struktur + Literale | nein | `matching/paris.py` |
 
-Ein zentrales `results/reports/comparison.csv` enthält **alle Metriken über alle Datensätze** in einer Tabelle ⇒ Direktvergleich.
+**Bewertung** (`matching/evaluate.py`): Alle Matcher werden auf dem
+**Test-Split von Fold 1** (70 % von $M$) bewertet. Die semi-supervised Matcher
+sehen den Train-Split (20 %) als Seeds, Parameter wurden auf dem Valid-Split
+(10 %) gewählt. Vorhersagen zu Entitäten außerhalb des Test-Splits werden
+ignoriert statt als False Positive gezählt — sonst würde ein unüberwachter
+Matcher dafür bestraft, dass er auch auf den Trainingsentitäten richtig liegt.
+
+| Kennzahl | Definition |
+| -------- | ---------- |
+| `precision` | korrekte Paare / vorhergesagte Paare (im Test-Universum) |
+| `recall` | korrekte Paare / Gold-Paare |
+| `f1` | harmonisches Mittel |
+| `hits_at_1` | Anteil Test-Entitäten mit korrektem Top-1-Partner |
+| `coverage` | Anteil Test-Entitäten, für die überhaupt vorhergesagt wurde |
 
 ---
 
-## 5. Priorisierung für Testat 2
+## 5. Output-Format
 
-Pflicht für die erste Implementierung sind Abschnitt 1 und die Degree-Verteilung aus 2.1.
-Hochrangig danach: Property-Verteilung (2.2), Connectivity (2.3), Attribut-Vollständigkeit (3.1) und die Alignment-Metriken (3.4).
-Optional, abhängig vom Zeitbudget: Typen-Verteilung (3.2), Long-Tail (3.3), Konsistenz aligned Entitäten (3.5), Schema-Heterogenität (3.6).
-Explizit ausgeklammert: Path-Length-Berechnungen und vollständige paarweise Attribut-Wert-Distanzen — zu teuer auf 100K-Graphen.
+Pro Datensatz unter `results/reports/<dataset>/`:
+
+```
+basic_stats.json                    §1
+degree_distribution.json            §2.1  + .degree_histogram.csv, .entity_degrees.csv
+property_distribution.json          §2.2  + .property_counts.csv
+connectivity.json                   §2.3  + .components.csv
+long_tail.json                      §2.4  + .long_tail_curve.csv
+attribute_completeness.json         §3.1  + .property_coverage.csv
+type_distribution.json              §3.2  + .types.csv
+schema_heterogeneity.json           §3.3  + .shared_properties.csv
+alignment_metrics.json              §3.4  + .splits.csv
+alignment_reachability.json         §3.5  + .reachability.csv
+aligned_consistency.json            §3.6  + .pair_consistency_sample.csv
+matching/<matcher>_pairs.csv        §4    vorhergesagte Paare je Matcher
+```
+
+Datensatzübergreifend unter `results/reports/`:
+
+| Datei | Inhalt |
+| ----- | ------ |
+| `comparison.csv` | alle Skalar-Metriken × alle Datensätze (Breitformat) |
+| `comparison_headline.csv` | die Kennzahlen für Bericht und Präsentation |
+| `matching_results.csv` | Precision/Recall/F1/Hits@1 je (Datensatz, Matcher) |
+| `matching_f1_matrix.csv` | F1-Matrix Datensätze × Matcher |
+| `merged_metrics_scores.csv` | Join aus beidem — Basis der Korrelationsanalyse |
+| `correlation.csv`, `correlation_top.csv` | Spearman-Korrelation Metrik ↔ F1 |
+| `backend_equivalence.csv` | Pandas vs. PySpark, metrikweise |
+| `runtimes.csv`, `backend_runtimes.csv` | Laufzeiten |
+
+Figures unter `results/figures/`.
 
 ---
 
 ## 6. Quellen
 
-- [1] Sun, Hu, Li (2017): JAPE-Paper, arXiv:1708.05045.
-- [2] Sun et al. (2020): OpenEA-Benchmarking-Study, PVLDB.
-- [3] Clauset, Shalizi, Newman (2009): *Power-Law Distributions in Empirical Data*. SIAM Review.
-- [4] Zhang et al. (2022): *Experimental Study of EA Approaches*, TKDE.
+- [1] Sun, Hu, Li (2017): *Cross-lingual Entity Alignment via Joint Attribute-Preserving Embedding*. arXiv:1708.05045.
+- [2] Sun et al. (2020): *A Benchmarking Study of Embedding-based Entity Alignment for KGs*. PVLDB 13(11).
+- [3] Clauset, Shalizi, Newman (2009): *Power-Law Distributions in Empirical Data*. SIAM Review 51(4).
+- [4] Zhang et al. (2022): *An Experimental Study of State-of-the-Art Entity Alignment Approaches*. TKDE.
+- [5] Suchanek, Abiteboul, Senellart (2011): *PARIS: Probabilistic Alignment of Relations, Instances, and Schema*. PVLDB 5(3).

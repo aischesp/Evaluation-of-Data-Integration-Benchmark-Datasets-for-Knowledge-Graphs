@@ -1,0 +1,109 @@
+# Erweiterte Konfiguration: alle 16 OpenEA-v2.0-Varianten.
+#
+# Zweck ist ausschliesslich die Korrelationsanalyse. Mit den sechs Kern-
+# datensaetzen aus config/datasets.yaml ist n = 6 zu klein, um Zusammenhaenge
+# zwischen Datensatz-Eigenschaften und Matching-Guete abzusichern; hier ist
+# n = 16. Die Kernauswertung und alle Detailtabellen der Ausarbeitung stammen
+# weiterhin aus config/datasets.yaml.
+#
+# Erzeugt von scripts/make_extended_config.py
+project: kg-quality-eval
+output_dir: results/reports_extended
+figures_dir: results/figures_extended
+eval_split: test
+seed_split: train
+datasets:
+- name: D_W_100K_V1
+  loader: openea
+  path: data/raw/openea/D_W_100K_V1
+  fold: 1
+- name: D_W_100K_V2
+  loader: openea
+  path: data/raw/openea/D_W_100K_V2
+  fold: 1
+- name: D_W_15K_V1
+  loader: openea
+  path: data/raw/openea/D_W_15K_V1
+  fold: 1
+- name: D_W_15K_V2
+  loader: openea
+  path: data/raw/openea/D_W_15K_V2
+  fold: 1
+- name: D_Y_100K_V1
+  loader: openea
+  path: data/raw/openea/D_Y_100K_V1
+  fold: 1
+- name: D_Y_100K_V2
+  loader: openea
+  path: data/raw/openea/D_Y_100K_V2
+  fold: 1
+- name: D_Y_15K_V1
+  loader: openea
+  path: data/raw/openea/D_Y_15K_V1
+  fold: 1
+- name: D_Y_15K_V2
+  loader: openea
+  path: data/raw/openea/D_Y_15K_V2
+  fold: 1
+- name: EN_DE_100K_V1
+  loader: openea
+  path: data/raw/openea/EN_DE_100K_V1
+  fold: 1
+- name: EN_DE_100K_V2
+  loader: openea
+  path: data/raw/openea/EN_DE_100K_V2
+  fold: 1
+- name: EN_DE_15K_V1
+  loader: openea
+  path: data/raw/openea/EN_DE_15K_V1
+  fold: 1
+- name: EN_DE_15K_V2
+  loader: openea
+  path: data/raw/openea/EN_DE_15K_V2
+  fold: 1
+- name: EN_FR_100K_V1
+  loader: openea
+  path: data/raw/openea/EN_FR_100K_V1
+  fold: 1
+- name: EN_FR_100K_V2
+  loader: openea
+  path: data/raw/openea/EN_FR_100K_V2
+  fold: 1
+- name: EN_FR_15K_V1
+  loader: openea
+  path: data/raw/openea/EN_FR_15K_V1
+  fold: 1
+- name: EN_FR_15K_V2
+  loader: openea
+  path: data/raw/openea/EN_FR_15K_V2
+  fold: 1
+metrics:
+- basic_stats
+- degree_distribution
+- property_distribution
+- connectivity
+- long_tail
+- attribute_completeness
+- type_distribution
+- schema_heterogeneity
+- aligned_consistency
+- alignment_metrics
+- alignment_reachability
+matchers:
+- name: literal_tfidf
+- name: value_overlap
+- name: structural_propagation
+- name: hybrid
+- name: paris
+  params:
+    jar_path: tools/paris_0_3.jar
+    heap: 4g
+    timeout_s: 7200
+backend:
+  mode: pandas
+  spark_master: local[*]
+  spark_memory: 4g
+  spark_metrics:
+  - basic_stats
+  - degree_distribution
+  - property_distribution

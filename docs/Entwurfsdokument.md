@@ -6,6 +6,23 @@ date: "Leipzig, 1. Juni 2026"
 betreuer: "Marvin Hofer"
 ---
 
+> **Hinweis (Stand Testat 2).** Dieses Dokument ist der zu Testat 1 abgegebene
+> Entwurf und wird bewusst unverändert gelassen, damit nachvollziehbar bleibt,
+> was ursprünglich geplant war. Drei Punkte haben sich nach dem
+> Testat-1-Gespräch geändert:
+>
+> - **OAEI wurde gestrichen** (Datensatz 7) — das ist Ontology- und nicht
+>   Entity-Alignment. Es bleiben sechs OpenEA-Datensätze.
+> - **Entity-Alignment-Matcher kamen hinzu** — der Entwurf beschrieb nur das
+>   Profiling; die Bewertung gegen eine echte Matching-Aufgabe fehlte.
+> - **Der Zeitplan in §8 gilt nicht mehr** — statt phasenweise (Wasserfall)
+>   wurde iterativ entwickelt: erst eine end-to-end lauffähige Pipeline, dann
+>   schrittweise Metriken und Matcher.
+>
+> Aktueller Stand: `docs/Architektur.md`, `docs/Metriken-Katalog.md`,
+> `docs/Datensaetze.md`, `docs/Ergebnisse.md`. Feedback und Umsetzung im Detail:
+> `docs/Testat1-Feedback.md`.
+
 # 1. Thema
 
 Das Dokument beschreibt den konzeptionellen Entwurf eines Python-Frameworks, mit dem wir Knowledge-Graph-Benchmark-Datensätze für Entity Alignment systematisch auf ihre Qualität untersuchen. Wir legen die zu berechnenden Basis-, Struktur- und Qualitätsmetriken fest, beschreiben Aufbau und Datenfluss der Anwendung (Pandas und PySpark) und begründen die Auswahl der sieben Datensätze, auf denen das Framework anschließend evaluiert wird.

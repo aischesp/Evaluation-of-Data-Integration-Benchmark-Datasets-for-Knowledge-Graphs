@@ -1,76 +1,101 @@
 # Auswahl der Benchmark-Datensätze
 
-## 1. Auswahlkriterien
+## 1. Eingrenzung nach Testat 1
 
-Wir wählen 7 Datensätze entlang folgender Dimensionen, damit unser Framework auf der gesamten Bandbreite realistischer Benchmarks evaluiert werden kann:
+Der Entwurf für Testat 1 enthielt neben OpenEA auch den **OAEI Conference
+Track**. Dieser ist nach Rücksprache mit dem Betreuer **gestrichen**: OAEI ist
+ein *Ontology*-Alignment-Problem — dort werden Klassen und Properties
+aufeinander abgebildet (`Person` ↔ `Human`) — während dieses Projekt
+ausschließlich *Entity* Alignment untersucht, also die Identifikation derselben
+realen Entität in zwei Graphen. Die beiden Probleme haben unterschiedliche
+Gold-Standards und unterschiedliche Metriken; sie zu vermischen hätte die
+Vergleichbarkeit zerstört.
 
-| Dimension                  | Spannweite, die wir abdecken                    |
-| -------------------------- | ----------------------------------------------- |
-| **Skala**                  | ~150 (OAEI) … 100 K Entitäten (OpenEA-large)    |
-| **Sprache**                | mono-lingual und cross-lingual (EN-FR, EN-DE)   |
-| **Quelle**                 | DBpedia, Wikidata, YAGO, OAEI, kuratiert        |
-| **Dichte (V1 vs. V2)**     | sparse (V1) und dense (V2) zum direkten Vergleich |
-| **Schema-Heterogenität**   | homogen (DBpedia↔DBpedia) bis heterogen (D-W, D-Y) |
-| **Alignment-Eigenschaften**| Anteil aligned Entitäten, 1:1 vs. 1:n          |
+Ebenfalls gestrichen wurde der ursprünglich geplante eigene
+DBpedia↔Wikidata-Subset (schon vor Testat 1, siehe Commit-Historie): der
+Aufwand für Dump-Verarbeitung und Sampling stand in keinem Verhältnis zum
+Erkenntnisgewinn, weil D\_W\_15K genau dieses Quellenpaar bereits abdeckt.
 
-## 2. Endgültige Auswahl (7 Datensätze)
+Damit bleibt **OpenEA v2.0** als einzige Quelle — für die Fragestellung kein
+Nachteil, sondern eine Voraussetzung: nur weil alle Datensätze demselben
+Erzeugungsprozess folgen und dasselbe Format haben, lassen sich Unterschiede in
+den Metriken kausal auf Sprache, Quelle und Dichte zurückführen statt auf
+Formatartefakte.
 
-### 2.1 OpenEA-Familie (6 Datensätze)
+## 2. Auswahlkriterien
 
-OpenEA [1] ist der **De-facto-Standard** für Entity-Alignment-Benchmarks. Vorteile:
+Wir wählen sechs Kern-Datensätze so, dass sie die relevanten Dimensionen
+aufspannen und sich paarweise nur in *einer* Dimension unterscheiden:
 
-- einheitliches **Format** (Tab-separierte Triples: `rel_triples_1`, `rel_triples_2`, `attr_triples_1`, `attr_triples_2`, `ent_links`)
-- **Seed-Splits** (train/valid/test) bereits vorbereitet
-- zwei Dichte-Stufen (V1: sparse, V2: dense — durch iteratives Degree-Bias-Sampling)
-- vier Sprach-/Quellen-Paare und zwei Größen (15 K / 100 K) ⇒ insgesamt 16 Varianten
+| Dimension | Abgedeckte Spannweite | Isolierender Vergleich |
+| --------- | --------------------- | ---------------------- |
+| **Dichte** | sparse (V1) vs. dense (V2) | EN\_FR\_15K V1 ↔ V2 |
+| **Sprache** | EN–FR vs. EN–DE | EN\_FR\_15K\_V1 ↔ EN\_DE\_15K\_V1 |
+| **Quelle / Schema** | DBpedia↔DBpedia, DBpedia↔Wikidata, DBpedia↔YAGO | EN\_FR ↔ D\_W ↔ D\_Y |
+| **Skala** | 15 K vs. 100 K Entitäten | EN\_FR\_15K\_V1 ↔ EN\_FR\_100K\_V1 |
 
-| # | Datensatz            | Beschreibung                                                                                    |
-| - | -------------------- | ----------------------------------------------------------------------------------------------- |
-| 1 | `EN_FR_15K_V1`       | DBpedia EN ↔ DBpedia FR, sparse (mittlerer Grad ≈ 4)                                            |
-| 2 | `EN_FR_15K_V2`       | DBpedia EN ↔ DBpedia FR, dense (mittlerer Grad ≈ 8). **Direkter Vergleich V1/V2.**              |
-| 3 | `EN_DE_15K_V1`       | DBpedia EN ↔ DBpedia DE — andere Zielsprache, eigene Property-Verteilung                        |
-| 4 | `D_W_15K_V1`         | DBpedia ↔ Wikidata, mono-lingual. **Stark heterogene Schemata.**                                |
-| 5 | `D_Y_15K_V1`         | DBpedia ↔ YAGO, mono-lingual. YAGO hat reichere Typ-Hierarchie ⇒ Typ-Verteilung interessant.    |
-| 6 | `EN_FR_100K_V1`      | 100 K-Variante. **Wichtig für Skalierungs-Demo (Spark-Pfad).**                                  |
+## 3. Kern-Auswahl (6 Datensätze)
 
-### 2.2 OAEI Conference Track (1 Datensatz)
+| # | Datensatz | Quellen | Sprache | Skala | Rolle im Vergleich |
+| - | --------- | ------- | ------- | ----- | ------------------ |
+| 1 | `EN_FR_15K_V1` | DBpedia EN ↔ DBpedia FR | cross-lingual | 15 K | Referenzpunkt |
+| 2 | `EN_FR_15K_V2` | DBpedia EN ↔ DBpedia FR | cross-lingual | 15 K | **Dichte-Effekt** gegenüber #1 |
+| 3 | `EN_DE_15K_V1` | DBpedia EN ↔ DBpedia DE | cross-lingual | 15 K | **Sprach-Effekt** gegenüber #1 |
+| 4 | `D_W_15K_V1` | DBpedia ↔ Wikidata | mono-lingual | 15 K | **maximale Schema-Heterogenität** |
+| 5 | `D_Y_15K_V1` | DBpedia ↔ YAGO | mono-lingual | 15 K | heterogenes Schema, sehr schmales YAGO-Vokabular |
+| 6 | `EN_FR_100K_V1` | DBpedia EN ↔ DBpedia FR | cross-lingual | 100 K | **Skalierung** gegenüber #1, PySpark-Pfad |
 
-- **Größe**: ~150 Entitäten (sehr klein!)
-- **Zweck**: Sanity-Check + Edge-Case (kleiner Graph, OWL-Ontologie statt RDF-Tripel)
-- **Format-Vielfalt**: OWL/XML — fordert unseren RDF-Loader heraus
+Ist-Werte nach dem Laden (aus `results/reports/comparison.csv`, nicht aus der
+Literatur übernommen):
 
-## 3. Diversität der Auswahl (Tabellarische Übersicht)
+| Datensatz | \|E₁\| | \|E₂\| | Rel-Tripel | Attr-Tripel | \|M\| | ø Grad |
+| --------- | ------ | ------ | ---------- | ----------- | ----- | ------ |
+| `EN_FR_15K_V1` | 15 000 | 15 000 | 47 334 / 40 864 | 57 164 / 54 401 | 15 000 | 5,88 |
+| `EN_FR_15K_V2` | 15 000 | 15 000 | 96 318 / 80 112 | 52 396 / 56 114 | 15 000 | 11,76 |
+| `EN_DE_15K_V1` | 15 000 | 15 000 | 47 676 / 50 419 | 62 403 / 133 776 | 15 000 | 6,54 |
+| `D_W_15K_V1` | 15 000 | 15 000 | 38 265 / 42 746 | 52 134 / 138 246 | 15 000 | 5,40 |
+| `D_Y_15K_V1` | 15 000 | 15 000 | 30 291 / 26 638 | 52 093 / 117 114 | 15 000 | 3,80 |
+| `EN_FR_100K_V1` | 100 000 | 100 000 | 309 607 / 258 285 | 384 248 / 340 725 | 100 000 | 5,68 |
 
-| #  | Datensatz                | # Ent.  | # Tripel | # Align. | Sprache    | Quellen          | Dichte |
-| -- | ------------------------ | ------- | -------- | -------- | ---------- | ---------------- | ------ |
-| 1  | OpenEA `EN_FR_15K_V1`    | 30 K    | ~96 K    | 15 K     | EN ↔ FR    | DBpedia          | sparse |
-| 2  | OpenEA `EN_FR_15K_V2`    | 30 K    | ~177 K   | 15 K     | EN ↔ FR    | DBpedia          | dense  |
-| 3  | OpenEA `EN_DE_15K_V1`    | 30 K    | ~96 K    | 15 K     | EN ↔ DE    | DBpedia          | sparse |
-| 4  | OpenEA `D_W_15K_V1`      | 30 K    | ~78 K    | 15 K     | mono       | DBpedia, Wikidata| sparse |
-| 5  | OpenEA `D_Y_15K_V1`      | 30 K    | ~91 K    | 15 K     | mono       | DBpedia, YAGO    | sparse |
-| 6  | OpenEA `EN_FR_100K_V1`   | 200 K   | ~650 K   | 100 K    | EN ↔ FR    | DBpedia          | sparse |
-| 7  | OAEI Conference          | ~150    | ~600     | ~50      | EN         | mehrere Onto.    | n/a    |
+## 4. Erweiterte Auswahl (16 Datensätze) — nur für die Korrelationsanalyse
 
-(Werte für OpenEA aus Sun et al. 2020 [2]; Werte für #7 nach erster Generierung verifizieren.)
+Die zentrale Frage des Projekts ist, **welche Datensatz-Eigenschaft die
+Matching-Güte erklärt**. Mit sechs Datensätzen ist die Stichprobe für eine
+Korrelation zu klein (n = 6, jede Rangkorrelation ist praktisch beliebig).
+Deshalb läuft dieselbe Pipeline zusätzlich über **alle 16 Varianten** des
+OpenEA-v2.0-Archivs (4 Quellenpaare × 2 Größen × 2 Dichtestufen), siehe
+`config/datasets_extended.yaml`.
 
-## 4. Erwarteter Mehrwert der Diversität
+Berichtet werden beide Läufe: die Detailtabellen der Ausarbeitung stammen aus
+der Kern-Auswahl, die Korrelationsaussagen aus dem erweiterten Lauf.
 
-- **#1 vs. #2** (V1 vs. V2): zeigt **Effekt der Dichte** auf alle Metriken (Degree-Verteilung wird kompakter, Long-Tail kürzer)
-- **#1 vs. #3**: **Sprach-Effekt** bei identischer Quelle (DBpedia)
-- **#4 vs. #5**: **Schema-Heterogenität** Wikidata (flach, viele Properties) vs. YAGO (tiefe Typ-Hierarchie)
-- **#1 vs. #6**: **Skalierungs­vergleich** 15 K → 100 K (Pandas → PySpark)
-- **#7** als Sonderfall: testet Loader-Robustheit bei OWL-Format
+## 5. Warum OpenEA v2.0 und nicht v1.1
 
-## 5. Bezug der Daten
+v2.0 kodiert die Entitäts-URIs (`http://dbpedia.org/resource/E399772` statt des
+Klarnamens) und entfernt so den **Name Bias**: in v1.1 lässt sich ein großer
+Teil des Alignments allein durch Vergleich der URI-Strings lösen, was jede
+Evaluierung attributbasierter Verfahren wertlos macht (Zhang et al. 2022). Für
+unsere Fragestellung ist das entscheidend — wir wollen messen, welche
+*inhaltlichen* Eigenschaften das Matching tragen, nicht wie gut ein Matcher
+URIs vergleicht. Unsere Matcher lesen die URI konsequent nie.
 
-| #     | Quelle / URL                                                                  |
-| ----- | ------------------------------------------------------------------------------ |
-| 1-6   | <https://github.com/nju-websoft/OpenEA> → `OpenEA_dataset_v2.0.zip` (~1.1 GB) |
-| 7     | <https://oaei.ontologymatching.org/2023/conference/index.html>                |
+Als Nebeneffekt liegen die absoluten F1-Werte deutlich unter den in älteren
+Papern für v1.1 berichteten — ein Vergleich über Datensatz-Versionen hinweg
+wäre also unzulässig.
 
-## 6. Quellen
+## 6. Bezug der Daten
+
+| Was | Woher | Größe |
+| --- | ----- | ----- |
+| OpenEA v2.0 (alle 16 Varianten) | figshare, Artikel 19258760 v3 — `scripts/download_data.py` | 237 MB gepackt, ~2 GB entpackt |
+| PARIS v0.3 (Jar) | `github.com/dig-team/PARIS`, Release v0.3 | 3,5 MB |
+
+Beides ist nicht im Repository versioniert; `scripts/download_data.py` stellt
+`data/raw/` und `tools/` reproduzierbar wieder her.
+
+## 7. Quellen
 
 - [1] Sun, Hu, Li (2017): *Cross-lingual Entity Alignment via Joint Attribute-Preserving Embedding*. arXiv:1708.05045.
 - [2] Sun et al. (2020): *A Benchmarking Study of Embedding-based Entity Alignment for KGs*. PVLDB 13(11).
 - [3] Zhang et al. (2022): *An Experimental Study of State-of-the-Art Entity Alignment Approaches*. TKDE.
-- [4] OAEI: <https://oaei.ontologymatching.org/>
+- [4] OpenEA-Repository: <https://github.com/nju-websoft/OpenEA>

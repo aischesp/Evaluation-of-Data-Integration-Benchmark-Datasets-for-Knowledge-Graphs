@@ -8,7 +8,10 @@ Expected directory layout (see github.com/nju-websoft/OpenEA):
         attr_triples_1    - head TAB attribute TAB literal
         attr_triples_2
         ent_links         - e1 TAB e2
-        721_5fold/1/{train,valid,test}_links
+        721_5fold/<fold>/{train,valid,test}_links
+
+Fold 1 is used by default. The fold matters because its train split is the seed
+alignment that the semi-supervised matchers are allowed to see.
 """
 
 from __future__ import annotations
@@ -19,10 +22,14 @@ import pandas as pd
 
 from kg_quality_eval.core import KGPair, KnowledgeGraph
 from kg_quality_eval.loaders.base import BaseLoader
+from kg_quality_eval.utils.literals import parse_literal
 
 
 class OpenEALoader(BaseLoader):
     name = "openea"
+
+    def __init__(self, fold: int = 1) -> None:
+        self.fold = fold
 
     @property
     def supported_formats(self) -> list[str]:
@@ -33,63 +40,85 @@ class OpenEALoader(BaseLoader):
         if not path.is_dir():
             raise FileNotFoundError(f"Not an OpenEA directory: {path}")
 
-        kg1 = self._load_kg(name=f"{path.name}__kg1", rel_file=path / "rel_triples_1", attr_file=path / "attr_triples_1")
-        kg2 = self._load_kg(name=f"{path.name}__kg2", rel_file=path / "rel_triples_2", attr_file=path / "attr_triples_2")
         alignments = self._load_alignments(path)
 
-        return KGPair(name=path.name, kg1=kg1, kg2=kg2, alignments=alignments, meta={"format": "openea"})
+        kg1 = self._load_kg(
+            name=f"{path.name}__kg1",
+            rel_file=path / "rel_triples_1",
+            attr_file=path / "attr_triples_1",
+            linked_entities=alignments["e1"],
+        )
+        kg2 = self._load_kg(
+            name=f"{path.name}__kg2",
+            rel_file=path / "rel_triples_2",
+            attr_file=path / "attr_triples_2",
+            linked_entities=alignments["e2"],
+        )
+
+        return KGPair(
+            name=path.name,
+            kg1=kg1,
+            kg2=kg2,
+            alignments=alignments,
+            meta={"format": "openea", "fold": self.fold, "path": str(path)},
+        )
 
     @staticmethod
-    def _load_kg(name: str, rel_file: Path, attr_file: Path) -> KnowledgeGraph:
-        rel = pd.read_csv(rel_file, sep="\t", header=None, names=["head", "relation", "tail"], dtype=str, na_filter=False)
+    def _load_kg(
+        name: str, rel_file: Path, attr_file: Path, linked_entities: pd.Series
+    ) -> KnowledgeGraph:
+        rel = pd.read_csv(
+            rel_file, sep="\t", header=None, names=["head", "relation", "tail"],
+            dtype=str, na_filter=False, quoting=3,
+        )
 
         if attr_file.exists():
             attr = pd.read_csv(
-                attr_file, sep="\t", header=None,
-                names=["head", "attribute", "literal"], dtype=str, na_filter=False,
+                attr_file, sep="\t", header=None, names=["head", "attribute", "literal"],
+                dtype=str, na_filter=False, quoting=3,
             )
-            attr["datatype"] = attr["literal"].apply(_infer_datatype)
+            # Datatypes are derived once here so that metrics never re-parse literals.
+            attr["datatype"] = [parse_literal(v)[1] for v in attr["literal"]]
         else:
             attr = pd.DataFrame(columns=["head", "attribute", "literal", "datatype"])
 
-        entities = pd.DataFrame({
-            "entity_uri": pd.concat([rel["head"], rel["tail"], attr["head"]]).drop_duplicates().reset_index(drop=True)
-        })
+        # The entity set is everything the KG talks about, including entities that
+        # only occur in the reference alignment (they then have degree 0).
+        entities = pd.DataFrame(
+            {
+                "entity_uri": pd.concat(
+                    [rel["head"], rel["tail"], attr["head"], linked_entities]
+                )
+                .drop_duplicates()
+                .sort_values(kind="stable")
+                .reset_index(drop=True)
+            }
+        )
 
         return KnowledgeGraph(name=name, entities=entities, rel_triples=rel, attr_triples=attr)
 
-    @staticmethod
-    def _load_alignments(path: Path) -> pd.DataFrame:
-        fold_dir = path / "721_5fold" / "1"
+    def _load_alignments(self, path: Path) -> pd.DataFrame:
+        fold_dir = path / "721_5fold" / str(self.fold)
         if fold_dir.is_dir():
-            train = _read_align(fold_dir / "train_links", "train")
-            valid = _read_align(fold_dir / "valid_links", "valid")
-            test = _read_align(fold_dir / "test_links", "test")
-            return pd.concat([train, valid, test], ignore_index=True)
+            df = pd.concat(
+                [
+                    _read_align(fold_dir / "train_links", "train"),
+                    _read_align(fold_dir / "valid_links", "valid"),
+                    _read_align(fold_dir / "test_links", "test"),
+                ],
+                ignore_index=True,
+            )
+            if not df.empty:
+                return df
 
-        # fall back to ent_links (no split available)
         return _read_align(path / "ent_links", "all")
 
 
 def _read_align(file: Path, split: str) -> pd.DataFrame:
-    if not file.exists():
+    if not file.exists() or file.stat().st_size == 0:
         return pd.DataFrame(columns=["e1", "e2", "split"])
-    df = pd.read_csv(file, sep="\t", header=None, names=["e1", "e2"], dtype=str, na_filter=False)
+    df = pd.read_csv(
+        file, sep="\t", header=None, names=["e1", "e2"], dtype=str, na_filter=False, quoting=3
+    )
     df["split"] = split
     return df
-
-
-def _infer_datatype(literal: str) -> str:
-    """Light-weight datatype inference from the literal string.
-
-    Good enough for coverage metrics; for full RDF semantics use rdflib.
-    """
-    if not literal:
-        return "empty"
-    if literal.startswith('"') and "^^" in literal:
-        return literal.rsplit("^^", 1)[1].strip("<>")
-    if literal.startswith('"') and "@" in literal[1:]:
-        return "lang_string"
-    if literal.lstrip("-").replace(".", "", 1).isdigit():
-        return "numeric"
-    return "string"

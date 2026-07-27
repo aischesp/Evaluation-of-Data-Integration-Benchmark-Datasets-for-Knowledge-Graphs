@@ -1,0 +1,84 @@
+# Pipeline-Konfiguration für den vollständigen Lauf.
+#
+# Datensätze: nur OpenEA (Entity Alignment). Das OAEI-Ontology-Matching wurde
+# nach dem Feedback zu Testat 1 gestrichen — es ist ein Ontologie- und kein
+# Entity-Alignment-Problem.
+#
+# Rohdaten liegen unter data/raw/openea/ (nicht versioniert, siehe
+# scripts/download_data.py).
+
+project: kg-quality-eval
+output_dir: results/reports
+figures_dir: results/figures
+
+# Fold 1 der 721-Splits: train (20 %) dient als Seed für die semi-supervised
+# Matcher, valid (10 %) für Parameterwahl, test (70 %) für alle Ergebnisse.
+eval_split: test
+seed_split: train
+
+datasets:
+  - name: EN_FR_15K_V1
+    loader: openea
+    path: data/raw/openea/EN_FR_15K_V1
+    fold: 1
+
+  - name: EN_FR_15K_V2
+    loader: openea
+    path: data/raw/openea/EN_FR_15K_V2
+    fold: 1
+
+  - name: EN_DE_15K_V1
+    loader: openea
+    path: data/raw/openea/EN_DE_15K_V1
+    fold: 1
+
+  - name: D_W_15K_V1
+    loader: openea
+    path: data/raw/openea/D_W_15K_V1
+    fold: 1
+
+  - name: D_Y_15K_V1
+    loader: openea
+    path: data/raw/openea/D_Y_15K_V1
+    fold: 1
+
+  - name: EN_FR_100K_V1
+    loader: openea
+    path: data/raw/openea/EN_FR_100K_V1
+    fold: 1
+
+metrics:
+  # Basis
+  - basic_stats
+  # Strukturell
+  - degree_distribution
+  - property_distribution
+  - connectivity
+  - long_tail
+  # Qualität
+  - attribute_completeness
+  - type_distribution
+  - schema_heterogeneity
+  - aligned_consistency
+  - alignment_metrics
+  - alignment_reachability
+
+matchers:
+  - name: literal_tfidf
+  - name: value_overlap
+  - name: structural_propagation
+  - name: hybrid
+  - name: paris
+    params:
+      jar_path: tools/paris_0_3.jar
+      heap: 4g
+      timeout_s: 7200
+
+backend:
+  mode: pandas            # pandas | spark | both
+  spark_master: local[*]
+  spark_memory: 4g
+  spark_metrics:
+    - basic_stats
+    - degree_distribution
+    - property_distribution
