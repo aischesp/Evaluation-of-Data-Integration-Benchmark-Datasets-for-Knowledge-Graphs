@@ -36,6 +36,7 @@ Das Feedback aus Testat 1 und seine Umsetzung: `docs/Testat1-Feedback.md`.
 ```bash
 python3.11 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
+pip install -e .            # macht `python -m kg_quality_eval.runner` verfügbar
 ```
 
 PARIS und das PySpark-Backend brauchen eine JVM (Java 17):

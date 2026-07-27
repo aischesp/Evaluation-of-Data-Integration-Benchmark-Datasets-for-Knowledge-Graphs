@@ -277,6 +277,18 @@ Der Schlüssel dazu ist das Speichermanagement der Ähnlichkeitsmatrix
 Durch Vokabular-Beschneidung, blockweises Produkt und sofortiges
 Top-k-Pruning bleibt der Bedarf linear in der Entitätenzahl.
 
+### 4.3 Reproduzierbarkeit
+
+Ein vollständiger Wiederholungslauf mit identischer Konfiguration wurde gegen
+die hier berichteten Zahlen verglichen:
+
+- **Alle 297 Metrik-Kennzahlen aller sechs Datensätze: exakt identisch.**
+- **Die vier eigenen Matcher: F1 exakt identisch.**
+- **PARIS: Abweichung bis 0,0013 F1.** Das externe Tool ist iterativ und nicht
+  bit-deterministisch. Für die berichteten Effekte (Größenordnung 0,03–0,28 F1)
+  ist das ohne Belang, sollte aber bekannt sein: PARIS-Werte in dieser Arbeit
+  sind auf ±0,002 genau, nicht darüber hinaus.
+
 ---
 
 ## 5. Grenzen der Aussagen

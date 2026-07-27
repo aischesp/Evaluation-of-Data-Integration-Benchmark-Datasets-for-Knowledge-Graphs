@@ -52,7 +52,6 @@ class SparseScoreMatcher(BaseMatcher):
 
     top_k: int = 10
     min_score: float = 0.0
-    mutual_nn: bool = False
 
     @abstractmethod
     def score_matrix(self, kg_pair: KGPair, seeds: pd.DataFrame | None) -> sp.csr_matrix:
@@ -77,11 +76,6 @@ class SparseScoreMatcher(BaseMatcher):
         e2_uris = kg_pair.kg2.entities["entity_uri"].to_numpy()
 
         rows, cols, vals = argmax_per_row(scores)
-        if self.mutual_nn and len(rows):
-            best_for_col = _best_per_column(scores)
-            keep = np.array([best_for_col.get(c, -1) == r for r, c in zip(rows, cols, strict=False)])
-            rows, cols, vals = rows[keep], cols[keep], vals[keep]
-
         keep = vals > self.min_score
         rows, cols, vals = rows[keep], cols[keep], vals[keep]
 
@@ -104,17 +98,6 @@ def argmax_per_row(matrix: sp.csr_matrix) -> tuple[np.ndarray, np.ndarray, np.nd
         vals.append(float(data[best]))
 
     return np.asarray(rows, dtype=int), np.asarray(cols, dtype=int), np.asarray(vals, dtype=float)
-
-
-def _best_per_column(matrix: sp.csr_matrix) -> dict[int, int]:
-    """For every column, the row that scores highest — used for mutual-NN filtering."""
-    coo = matrix.tocoo()
-    best: dict[int, tuple[float, int]] = {}
-    for r, c, v in zip(coo.row, coo.col, coo.data, strict=False):
-        cur = best.get(c)
-        if cur is None or v > cur[0]:
-            best[c] = (v, r)
-    return {c: r for c, (_, r) in best.items()}
 
 
 def topk_per_row(matrix: sp.csr_matrix, k: int) -> sp.csr_matrix:

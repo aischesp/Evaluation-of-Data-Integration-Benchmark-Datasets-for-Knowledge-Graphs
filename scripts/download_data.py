@@ -70,12 +70,24 @@ def extract(zip_path: Path, wanted: set[str] | None) -> None:
     print(f"✓ {len(members)} Dateien entpackt nach {OPENEA_ROOT}")
 
 
+REQUIRED_FILES = [
+    "rel_triples_1", "rel_triples_2", "attr_triples_1", "attr_triples_2", "ent_links",
+]
+
+
+def missing_datasets() -> list[str]:
+    return [
+        name
+        for name in DATASETS
+        if any(not (OPENEA_ROOT / name / f).exists() for f in REQUIRED_FILES)
+    ]
+
+
 def verify() -> int:
     missing = 0
     for name in DATASETS:
         root = OPENEA_ROOT / name
-        files = ["rel_triples_1", "rel_triples_2", "attr_triples_1", "attr_triples_2", "ent_links"]
-        absent = [f for f in files if not (root / f).exists()]
+        absent = [f for f in REQUIRED_FILES if not (root / f).exists()]
         if absent:
             print(f"✗ {name}: fehlt {absent}")
             missing += 1
@@ -91,11 +103,16 @@ def main() -> int:
     parser.add_argument("--keep-zip", action="store_true", help="Archiv nach dem Entpacken behalten")
     args = parser.parse_args()
 
-    download(OPENEA_URL, OPENEA_ZIP)
-    extract(OPENEA_ZIP, None if args.all else set(DATASETS))
-    if not args.keep_zip:
-        OPENEA_ZIP.unlink(missing_ok=True)
-        print(f"✓ {OPENEA_ZIP} gelöscht (--keep-zip zum Behalten)")
+    # Ohne diesen Check würde ein zweiter Aufruf das 237-MB-Archiv erneut laden,
+    # nur um festzustellen, dass alle Dateien schon da sind.
+    if args.all or missing_datasets():
+        download(OPENEA_URL, OPENEA_ZIP)
+        extract(OPENEA_ZIP, None if args.all else set(DATASETS))
+        if not args.keep_zip:
+            OPENEA_ZIP.unlink(missing_ok=True)
+            print(f"✓ {OPENEA_ZIP} gelöscht (--keep-zip zum Behalten)")
+    else:
+        print(f"✓ Alle {len(DATASETS)} Datensätze liegen bereits unter {OPENEA_ROOT}")
 
     download(PARIS_URL, PARIS_JAR)
 
