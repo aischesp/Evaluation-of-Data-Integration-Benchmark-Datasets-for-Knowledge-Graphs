@@ -2,139 +2,259 @@
 
 Testat 1 fand Anfang Juni 2026 statt. Der Entwurf wurde inhaltlich angenommen
 ("saubere Arbeit", "die Datensätze sind super", "die Metriken sind genug"), mit
-mehreren konkreten Auflagen für die Implementierungsphase. Diese Seite hält
-fest, was gefordert war und wo es umgesetzt ist — auch damit in der
-Abschlusspräsentation nachvollziehbar bleibt, welche Entscheidungen aus dem
-Gespräch stammen.
+mehreren konkreten Auflagen für die Implementierungsphase.
 
-## 1. Matching-Ansätze fehlten komplett — Hauptkritik
+## Übersicht: unsere Gesprächsnotizen abgehakt
+
+| # | Auflage aus dem Gespräch | Status | Wo |
+| - | ------------------------ | ------ | -- |
+| 0 | **Forschungsfrage fehlt**: welche strukturellen Eigenschaften führen zu Matcher-Performance, und warum schauen wir uns das an? | ✅ umgesetzt | README, `docs/Ergebnisse.md` (Kopf) |
+| 1 | **Entity Matching muss im Vordergrund stehen — die Matcher fehlen**; existierende Repositories nutzen, ggf. Format konvertieren | ✅ umgesetzt | §1 unten |
+| 2 | **PARIS als Matcher nutzen** | ✅ umgesetzt | `matching/paris.py` |
+| 3 | **Pandas *oder* PySpark — nicht beides**; Pandas reicht auch für 100 K | ⚠️ **bewusst abgewichen** | §3 unten |
+| 4 | **Nur rdflib probieren**, statt Pandas/PySpark | ⚠️ **geprüft und verworfen, mit Messung** | §4 unten |
+| 5 | **Nur OpenEA**, OAEI (7. Datensatz) weglassen | ✅ umgesetzt | `docs/Datensaetze.md` §1 |
+| 6 | **rdflib-API reicht für die meisten Sachen** | ⚠️ teilweise — siehe §4 | `loaders/rdf_export.py` |
+| 7 | **Pipeline zuerst bauen**, dann nach und nach Metriken ergänzen | ✅ umgesetzt | §7 unten |
+| 8 | Metriken gruppieren und **tabellarisch** statt als Fließtext | ✅ umgesetzt | `docs/Metriken-Katalog.md` |
+| 9 | **Am Ende zählt der Unterschied auf den Matchern**, nicht nur strukturelle Unterschiede der Datensätze | ✅ umgesetzt | `docs/Ergebnisse.md` §3 |
+| 10 | Auf die **Präsentation** hinarbeiten | ⚠️ Drehbuch fertig, **Folien fehlen** | `docs/Praesentation.md` |
+| 11 | *(Matcher aus dem OpenEA-Paper)* | ❌ **nicht umgesetzt** | §5 unten |
+
+---
+
+## 0. Forschungsfrage (war der erste Kritikpunkt)
+
+> "Da fehlt jetzt sozusagen leider so ein bisschen … am Ende wollen wir das auch
+> mal testen, wie gut das matcht auf verschiedenen Strukturen, damit wir so
+> Korrelationen ziehen können."
+
+Der Entwurf beschrieb, *was* berechnet wird, aber nicht, *welche Frage* damit
+beantwortet werden soll. Jetzt explizit formuliert:
+
+> **Welche strukturellen und semantischen Eigenschaften von
+> Entity-Alignment-Benchmarks bestimmen, wie gut ein Matching-Verfahren auf
+> ihnen abschneidet — und hängt das davon ab, welche Art von Verfahren man
+> einsetzt?**
+
+Und die Begründung, warum man das anschaut: Wer auf einem einzelnen Benchmark
+evaluiert, misst die Eigenschaften dieses Benchmarks mit. Unser Beleg dafür:
+derselbe strukturelle Matcher erreicht auf `D_Y` F1 0,65 und auf `EN_FR` 0,26 —
+beim textuellen Matcher ist es genau umgekehrt. Zwei Benchmarks, zwei
+gegensätzliche Aussagen darüber, welches Verfahren besser ist.
+
+## 1. Matching-Ansätze — Hauptkritik
 
 > "Es fehlen so ein bisschen die Matcher. […] Qualitätsbewertung ist halt nicht
-> nur dieses Profiling. Also was ihr geschrieben habt, ist dieses Profiling.
-> […] Das Profiling ist halt nur der erste Schritt, um überhaupt irgendwelche
-> Werte zu haben, wo man dann sehen kann: aha, der Datensatz war unterschiedlich
-> gegenüber dem anderen und deswegen ist das Matching-Ergebnis schlechter oder
-> besser."
+> nur dieses Profiling. Das Profiling ist halt nur der erste Schritt, um
+> überhaupt irgendwelche Werte zu haben, wo man dann sehen kann: aha, der
+> Datensatz war unterschiedlich und deswegen ist das Matching-Ergebnis
+> schlechter oder besser."
 
-Der Entwurf beschrieb ausschließlich die Berechnung von Kennzahlen. Es fehlte
-der Datenintegrations-Task selbst, gegen den sich diese Kennzahlen erst
-validieren lassen.
+**Umgesetzt.** Fünf Matcher, bewusst über die Signaltypen verteilt, damit die
+Korrelationen überhaupt unterscheidbar werden:
 
-**Umgesetzt.** Fünf Entity-Alignment-Matcher, bewusst über die Signaltypen
-verteilt, damit die Korrelationen unterscheidbar werden:
+| Matcher | Familie | Signal | Herkunft |
+| ------- | ------- | ------ | -------- |
+| `literal_tfidf` | textuell | TF-IDF über Literal-Tokens | eigene Implementierung |
+| `value_overlap` | textuell | Überlappung ganzer Literalwerte | eigene Implementierung |
+| `structural_propagation` | strukturell | Nachbarschaft über Seeds, mit Bootstrapping | eigene Implementierung |
+| `hybrid` | hybrid | Kombination beider | eigene Implementierung |
+| `paris` | holistisch | Struktur + Literale | **PARIS v0.3, dig-team — externes Tool** |
 
-| Matcher | Familie | Signal | Warum dabei |
-| ------- | ------- | ------ | ----------- |
-| `literal_tfidf` | textuell | TF-IDF über Literal-Tokens | der vom Betreuer beschriebene "textuelle Matcher, der die Entität in Text encodiert" |
-| `value_overlap` | textuell | Überlappung ganzer Literalwerte | klassisches blocking-basiertes ER |
-| `structural_propagation` | strukturell | Nachbarschaft über Seeds, mit Bootstrapping | Gegenstück, das nur die Graphstruktur nutzt |
-| `hybrid` | hybrid | Kombination beider | zeigt Komplementarität |
-| `paris` | holistisch | PARIS v0.3 | vom Betreuer namentlich empfohlen |
+Zum Hinweis "existierende Python-Repositories nehmen, das muss man nicht selber
+bauen": Bei PARIS haben wir genau das getan. Die vier anderen sind eigene, sehr
+kompakte Implementierungen — das war schneller, als fremde Repositories auf das
+OpenEA-Format umzubiegen, und wir brauchten gezielt Verfahren, die *je genau
+einen* Signaltyp nutzen. Genau diese Trennschärfe macht die Familien-Analyse
+möglich. Für die absolute Leistungsfähigkeit steht PARIS als etabliertes
+Verfahren daneben.
 
-> "Da gibt es zum Beispiel den PARIS-Algorithmus. […] PARIS ist einfach nur eine
-> Jar-Datei und das hat keine Python-API. Du brauchst zwei Input-Files im
-> RDF-N-Triple-Format und dann gibt das dir einen Ordner zurück und in dem
-> Ordner sind so Iterations-Ordner."
+## 2. PARIS
 
-Genau so umgesetzt in `src/kg_quality_eval/matching/paris.py`: N-Triples-Export
-über rdflib, Subprozess-Aufruf des Jars, Einlesen der letzten nicht-leeren
-`*_eqv.tsv`. Zwei Fallstricke, die dabei auftraten, sind in
-`docs/Architektur.md` §10 dokumentiert.
+> "PARIS ist einfach nur eine Jar-Datei und das hat keine Python-API. Du
+> brauchst zwei Input-Files im RDF-N-Triple-Format und dann gibt das dir einen
+> Ordner zurück und in dem Ordner sind so Iterations-Ordner."
 
-**Wirkung:** aus der Comparison-Tabelle allein wären die Datensätze nur
-"unterschiedlich" gewesen. Jetzt zeigt `results/reports/correlation.csv`, welche
-Unterschiede tatsächlich auf die Matching-Güte durchschlagen — und dass das je
-nach Matcher-Familie andere sind.
+**Umgesetzt, genau so.** `matching/paris.py`: N-Triples-Export über rdflib,
+Subprozess-Aufruf, Einlesen der letzten nicht-leeren `*_eqv.tsv`. Zwei
+Stolperstellen, die dabei auftraten (PARIS kürzt URIs mit eigenen Präfixen; die
+letzte Iterationsdatei ist leer), sind in `docs/Architektur.md` §10
+dokumentiert und durch Tests abgesichert.
 
-## 2. OAEI streichen — nur Entity Alignment
+Ergebnis: F1 0,74–0,98 bei Precision 0,93–0,99 — der mit Abstand beste Matcher.
 
-> "Also wir machen nur Entity Alignment, also nehmt das OAEI weg. […] Bei dem
-> Ontology Alignment Evaluation geht es um Ontologien, da geht es darum zu
-> alignen, was die gleichen Properties sind und die gleichen Klassen. […] Und
-> Entity Alignment ist halt wirklich zu sagen, das sind die gleichen Personen."
+## 3. Pandas oder PySpark — hier sind wir abgewichen
+
+> "Es gibt keinen Sinn, beides zu machen. […] Ihr könnt das jetzt auch nur mit
+> Pandas machen." — aber auch: *"Die Idee war, PySpark zu benutzen, weil es
+> skaliert, weil es ja eigentlich das Big Data Praktikum ist. Aber es ist nicht
+> schlimm."*
+
+**Wir haben beides gebaut.** Das ist eine bewusste Abweichung, und sie muss in
+der Präsentation begründet werden können.
+
+*Was kritisiert wurde:* die **Reihenfolge** im Zeitplan — erst alles in Pandas,
+Wochen später alles nochmal in Spark. Das wäre doppelte Arbeit ohne Erkenntnis.
+
+*Was wir gemacht haben:* Pandas ist der Standardpfad für alle elf
+Metrik-Gruppen. Spark existiert **nur für die drei Kernmetrik-Gruppen**
+(~300 Zeilen), wurde in einem Zug mitgebaut statt als eigene Phase, und liefert
+etwas, das die Pandas-Version allein nicht kann: einen **Äquivalenznachweis**.
+`scripts/run_backend_benchmark.py` rechnet beide Wege und vergleicht
+metrikweise — 174 von 174 Kennzahlen exakt identisch.
+
+*Warum wir das für vertretbar halten:* Die offizielle Aufgabenstellung verlangt
+wörtlich "implement the conceptualized framework in Python (PySpark)" und ein
+modulares Design, in dem "different processing frameworks (e.g. Pandas or
+PySpark) can be easily integrated and **compared**". Ohne einen zweiten Pfad
+gibt es nichts zu vergleichen.
+
+*Falls der Betreuer das anders sieht:* Der Spark-Teil ist vollständig
+gekapselt (`backends/spark.py`, `scripts/run_backend_benchmark.py`, ein
+Config-Block). Er lässt sich ohne jede Änderung am übrigen Framework entfernen.
+
+## 4. Nur rdflib statt Pandas — geprüft und mit Zahlen verworfen
+
+> "Ihr könnt sozusagen versuchen, Pandas wegzulassen, PySpark wegzulassen, nur
+> rdflib zu benutzen. […] Die rdflib-API ist uralt, das ist so maintained, das
+> ist auch eine ganz einfache API."
+
+Diesen Vorschlag haben wir nicht einfach übergangen, sondern gemessen:
+`scripts/benchmark_rdflib.py` lädt denselben KG einmal in einen rdflib-Graph
+und einmal in unsere Pandas-Repräsentation und rechnet in beiden
+Triple-Count und Grad-Verteilung.
+
+| Datensatz | Backend | Laden | Metriken | Peak-RSS |
+| --------- | ------- | ----: | -------: | -------: |
+| `EN_FR_15K_V1` (KG1) | Pandas | 0,29 s | 0,011 s | 129 MB |
+| | rdflib | 1,66 s | 0,174 s | 239 MB |
+| `EN_FR_100K_V1` (KG1) | Pandas | 2,26 s | 0,084 s | 338 MB |
+| | rdflib | 21,4 s | 1,49 s | 891 MB |
+
+**Ergebnis: rdflib rechnet dasselbe, aber deutlich teurer.** Grad-Verteilung
+(ø 6,19, Max 1293) und Entitätsmenge (100 000) stimmen exakt überein — eine
+schöne Kreuzvalidierung über zwei völlig verschiedene Datenmodelle. Aber der
+Ladefaktor gegenüber Pandas wächst von 5,7 (15 K) auf **9,5** (100 K), der
+Speicherfaktor von 1,8 auf 2,6. Beides verschlechtert sich mit der Größe.
+
+Drei Gründe, warum rdflib hier trotzdem nicht der Hauptpfad ist:
+
+1. **OpenEA liefert gar kein RDF.** Die Dateien sind Tab-getrennt, YAGO-Terme
+   wie `YAGO/E473489` sind keine gültigen IRIs. Vor dem rdflib-Laden müsste
+   erst konvertiert werden — der N-Triples-Export kostet zusätzliche 6,3 s und
+   19–130 MB Plattenplatz je KG.
+2. **rdflib hält ebenfalls alles im Hauptspeicher**, nur ineffizienter. Der
+   Skalierungsvorteil, um den es im Big-Data-Praktikum geht, entsteht dadurch
+   nicht.
+3. **Die Metriken sind ihrer Natur nach relational.** Grad-Verteilung,
+   Property-Häufigkeiten und Alignment-Ambiguität sind Group-Bys und Joins.
+   Genau dafür ist ein DataFrame gebaut, und genau so ließ es sich 1:1 nach
+   Spark übertragen.
+
+**Wo rdflib trotzdem eingesetzt wird:** für den N-Triples-Export nach PARIS
+(`loaders/rdf_export.py`) — dort ist es genau richtig, weil es korrektes
+IRI- und Literal-Escaping mitbringt, das wir sonst selbst hätten schreiben
+müssen. Der Round-Trip ist durch Tests abgesichert.
+
+**Nebenbefund aus dem Vergleich:** Pandas zählt 693 855 Tripel, rdflib 693 809.
+Die Differenz von 46 erklärt sich vollständig: 45 Attribut-Tripel mit leerem
+Literalwert (kein gültiges RDF-Objekt, wird beim Export übersprungen) und **ein
+echtes Duplikat in den Rohdaten** — `E366684 dbo:bSide "Haunted Castle"` steht
+zweimal in der Datei. RDF ist eine *Menge* von Tripeln, eine TSV-Datei eine
+*Liste*. Das ist keine Ungenauigkeit, sondern der semantische Unterschied
+zwischen den beiden Datenmodellen, und es ist zugleich ein kleiner
+Datenqualitätsbefund über den Benchmark.
+
+## 5. Matcher aus dem OpenEA-Paper — offen
+
+> "Bei dem OpenEA, da sind eigentlich auch schon Matcher dabei gewesen. Die
+> haben ja vor allem welche mit Trainingsdaten genommen. Wäre in dem Fall ja
+> kein Problem, weil es das ja gibt."
+
+**Nicht umgesetzt.** Kein embedding-basiertes Verfahren (MTransE, GCN-Align,
+BootEA, RDGCN) ist eingebunden. Diese Verfahren trainieren pro Datensatz ein
+Modell, brauchen realistisch eine GPU, und das OpenEA-Repository hängt an
+TensorFlow 1.x — das ließ sich im verbleibenden Zeitbudget nicht seriös
+aufsetzen.
+
+**Konsequenz für die Aussagekraft:** Es fehlt genau die Verfahrensklasse, für
+die diese Benchmarks ursprünglich gebaut wurden. Unser
+`structural_propagation` nutzt zwar dasselbe Signal (Struktur + Seeds), aber
+ein gelerntes Embedding muss darauf nicht genauso reagieren. Das ist in
+`docs/Ergebnisse.md` §5 als Einschränkung dokumentiert und die naheliegendste
+Fortsetzung bis Testat 3.
+
+*Günstigere Alternative, falls Zeit bleibt:* die publizierten F1-Werte aus Sun
+et al. (2020) als Literaturwerte in die Korrelationsanalyse aufnehmen — der
+Betreuer hat das ausdrücklich angeboten ("ihr könnt auch in der Literatur
+gucken, ob ihr Leute findet, die genau das benutzt haben, und könnt denen ihre
+F1-Scores nehmen").
+
+## 6. OAEI streichen
+
+> "Also wir machen nur Entity Alignment, also nehmt das OAEI weg."
 
 **Umgesetzt.** OAEI ist aus Config, Datensatz-Dokument, Architektur und README
-entfernt. Der geplante RDF/OWL-Loader entfällt damit ebenfalls.
+entfernt; der geplante RDF/OWL-Loader entfällt damit.
 
-Nebenbefund, der genau in diese Unterscheidung fällt: die OpenEA-Datensätze
-enthalten praktisch **keine** Typ-Tripel (`rdf:type`). Ontologie-Information
-ist dort also gar nicht vorhanden — siehe `docs/Ergebnisse.md`.
+Passender Nebenbefund: Die OpenEA-Datensätze enthalten praktisch **keine**
+Typ-Tripel (in fünf von sechs Datensätzen null). Ontologie-Information ist dort
+also gar nicht vorhanden — was die Trennung der beiden Probleme zusätzlich
+untermauert.
 
-## 3. Nicht Pandas *und* PySpark nacheinander
+## 7. Iterativ statt Wasserfall
 
-> "Die Idee war ja auch PySpark eigentlich direkt zu benutzen und kein Pandas.
-> […] Es gibt keinen Sinn, beides zu machen. […] Weil ich das nur sehe von der
-> Zeit her, weil ihr das so eingeplant habt, dass ihr da erst in den Pandas und
-> dann macht ihr irgendwann später noch das PySpark-Backend. Das ergibt nicht so
-> viel Sinn."
+> "Es ist besser, so schnell wie möglich zu versuchen, eine Pipeline
+> hinzubekommen und dann nach und nach immer wieder Metriken hinzuzufügen. […]
+> Die erste Comparison Table kommt halt erst nach Phase 6. Und das ist viel zu
+> spät."
 
-Kritisiert wurde die *Reihenfolge* im Zeitplan (erst alles in Pandas, danach
-alles nochmal in Spark), nicht die Existenz zweier Backends.
-
-**Umgesetzt, mit bewusster Abweichung.** Pandas ist der Standardpfad für alle
-elf Metrik-Gruppen. Zusätzlich gibt es ein PySpark-Backend, aber nur für die
-drei Kernmetrik-Gruppen, und es wurde in einem Zug mit der Pandas-Version
-gebaut statt als nachgelagerte Phase. `scripts/run_backend_benchmark.py` prüft
-metrikweise, dass beide Wege dieselben Zahlen liefern (Ergebnis: 29/29
-identisch).
-
-Begründung für die Abweichung: die Aufgabenstellung verlangt explizit
-"implement the conceptualized framework in Python (PySpark)" und ein modulares
-Design, in dem "different processing frameworks (e.g. Pandas or PySpark) can be
-easily integrated and compared". Ein verifizierter Äquivalenztest zwischen
-beiden ist die direkte Antwort darauf — und kostete deutlich weniger Zeit als
-die ursprünglich geplante vollständige Zweitimplementierung.
-
-## 4. Iterativ statt Wasserfall
-
-> "Ihr müsst nicht alle Metriken implementieren und dann den Loader und dann das
-> Szenario, sondern es ist besser, so schnell wie möglich zu versuchen, eine
-> Pipeline hinzubekommen und dann nach und nach immer wieder Metriken
-> hinzuzufügen. […] Weil ihr müsst euch vorstellen, die erste Comparison Table
-> kommt halt erst nach Phase 6. Und das ist viel zu spät, weil da stellt man
-> fest, dass vieles nicht funktioniert, und da ist gar keine Zeit mehr."
-
-**Umgesetzt.** Vorgehen war: Loader + eine Metrik + eine Bewertung
+**Umgesetzt.** Reihenfolge war: Loader → eine Metrik → eine Bewertung
 end-to-end lauffähig, danach Metriken und Matcher einzeln ergänzt. Die
-`comparison.csv` existierte, bevor die Hälfte der Metriken geschrieben war.
-Der Runner hat drei einzeln abschaltbare Stufen (`--no-profile`, `--no-match`,
-`--no-report`), damit dieses Vorgehen auch weiterhin möglich bleibt.
+`comparison.csv` existierte, bevor die Hälfte der Metriken geschrieben war. Der
+Runner hat drei einzeln abschaltbare Stufen (`--no-profile`, `--no-match`,
+`--no-report`), damit das Vorgehen weiterhin möglich bleibt. Der Zeitplan aus
+§8 des Entwurfsdokuments gilt nicht mehr.
 
-## 5. Metriken gruppieren und tabellarisch darstellen
+## 8. Metriken tabellarisch
 
-> "Ihr könnt die dann ein bisschen unterteilen, weil es gibt so strukturelle
-> Metriken, also es gibt sozusagen Kernmetriken. […] Wenn ihr da auch eine
-> Tabelle nochmal machen könnt für die Metriken. Das ist vor allem für die
-> Präsentation dann auch einfacher. […] Ihr habt das ja in Fließtext einfach so
-> runtergeschrieben, das hätte auch eine Tabelle sein können."
+> "Wenn ihr da auch eine Tabelle nochmal machen könnt für die Metriken. Das ist
+> vor allem für die Präsentation dann auch einfacher. […] Ihr habt das ja in
+> Fließtext einfach so runtergeschrieben."
 
-**Umgesetzt.** `docs/Metriken-Katalog.md` ist durchgängig tabellarisch, gruppiert
-in Basis / strukturell / Qualität, jede Zeile mit Definition *und* Begründung.
-Dieselbe Gliederung findet sich im Code (`metrics/basic.py`,
-`metrics/structural.py`, `metrics/quality.py`) und in der Präsentation wieder.
+**Umgesetzt.** `docs/Metriken-Katalog.md` ist durchgängig tabellarisch,
+gruppiert in Basis / strukturell / Qualität, jede Zeile mit Definition *und*
+Begründung ("Warum relevant"). Dieselbe Gliederung findet sich im Code und in
+der Präsentation wieder.
 
-## 6. Strukturelle Eigenschaften explizit begründen
+## 9. Der Unterschied auf den Matchern, nicht nur auf den Datensätzen
 
-> "Je mehr Attribute da sind, desto einfacher ist das für irgendeinen
-> Matching-Ansatz. […] Wenn das ein Graph ist, der eh wenig textuelle
-> Beschreibung hat, dann funktioniert der Matcher vermutlich schlechter, als
-> wenn man einen Matcher nimmt, der wirklich diese Struktur sich anguckt. […]
-> Dass halt so diese strukturellen Eigenschaften irgendwie diesen Unterschied
-> machen, dass ein Matcher besser oder schlechter funktioniert, das fehlt mir
-> ein bisschen, dass das explizit erwähnt ist."
+> "Da haben wir diese Comparison-CSV raus, aber da sieht man ja dann nur die
+> strukturellen Unterschiede und man sieht da jetzt gerade noch nicht, was
+> eigentlich dann der Unterschied auf diesen Matchern ist."
 
-**Umgesetzt und empirisch belegt.** Jede Metrik im Katalog hat eine Spalte
-"Warum relevant". Wichtiger: die Hypothese wird nicht mehr nur behauptet,
-sondern gemessen — die Matcher-Familien reagieren nachweislich auf
-unterschiedliche Eigenschaften (`docs/Ergebnisse.md`, Abschnitt
-Korrelationsanalyse).
+**Umgesetzt** und über eine reine Korrelation hinaus: Die OpenEA-Familie
+erlaubt einen **kontrollierten Vergleich**. V1 und V2 enthalten dieselben
+Entitäten, nur die Relations-Tripel verdoppeln sich (Attribut-Tripel bleiben
+bei Faktor 0,97–1,21). Gemittelt über 8 Datensatzpaare:
 
-## 7. Kleinere Punkte
+| Matcher | V1 sparse | V2 dense | Δ |
+| ------- | --------: | -------: | ---: |
+| `literal_tfidf` | 0,207 | 0,189 | −0,02 |
+| `value_overlap` | 0,475 | 0,451 | −0,02 |
+| `structural_propagation` | 0,334 | 0,614 | **+0,28** |
+| `hybrid` | 0,386 | 0,550 | +0,16 |
+| `paris` | 0,824 | 0,908 | +0,08 |
 
-| Punkt aus dem Gespräch | Status |
-| ---------------------- | ------ |
-| rdflib einsetzen | genutzt für den N-Triples-Export nach PARIS (`loaders/rdf_export.py`), inkl. Round-Trip-Test |
-| Property-Verteilung beibehalten ("finde ich immer ganz wichtig") | `property_distribution`, erweist sich als stärkster Prädiktor für den strukturellen Matcher |
-| Namespace-Overlap eher weglassen ("zu kompliziert zu verstehen") | bleibt berechnet, ist aber nicht in der Headline-Tabelle und nicht in der Präsentation |
-| Zeitplan dynamisch halten | Zeitplan aus dem Entwurfsdokument entfällt, Fortschritt läuft über die Commit-Historie |
-| Bestehende Repositories nutzen statt alles neu schreiben | PARIS wird als fertiges Tool eingebunden statt nachgebaut |
+Das ist keine Korrelation, sondern ein Experiment mit genau einer veränderten
+Variable.
+
+## 10. Kleinere Punkte
+
+| Punkt | Status |
+| ----- | ------ |
+| Property-Verteilung beibehalten ("finde ich immer ganz wichtig") | ✅ und erweist sich als **stärkster Prädiktor** über alle Matcher |
+| Namespace-Overlap eher weglassen ("zu kompliziert zu verstehen") | wird berechnet, ist aber weder in der Headline-Tabelle noch in der Präsentation |
+| Zeitplan dynamisch halten | ✅ Zeitplan entfällt, Fortschritt über die Commit-Historie |
+| Bestehende Repositories nutzen statt alles neu schreiben | teilweise — PARIS ja, die vier eigenen Matcher nein (Begründung §1) |

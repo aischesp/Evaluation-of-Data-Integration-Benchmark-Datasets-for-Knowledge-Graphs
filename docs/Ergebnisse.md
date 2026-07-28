@@ -4,6 +4,21 @@ Stand: Testat 2. Alle Zahlen stammen aus `results/reports/` (sechs
 Kern-Datensätze) bzw. `results/reports_extended/` (alle 16 OpenEA-Varianten)
 und sind mit den Kommandos aus dem README reproduzierbar.
 
+## Forschungsfrage
+
+> **Welche strukturellen und semantischen Eigenschaften von
+> Entity-Alignment-Benchmarks bestimmen, wie gut ein Matching-Verfahren auf
+> ihnen abschneidet — und hängt das davon ab, welche Art von Verfahren man
+> einsetzt?**
+
+| Teilfrage | Beantwortet in |
+| --------- | -------------- |
+| F1: Wie unterscheiden sich gängige Benchmarks strukturell und semantisch? | §1 |
+| F2: Wie unterschiedlich schneiden Matcher darauf ab? | §2 |
+| F3: Welche Eigenschaften erklären diese Unterschiede kausal? | §3.1 (kontrollierte Vergleiche) |
+| F4: Reagieren verschiedene Matcher-Familien auf verschiedene Eigenschaften? | §3.2 |
+| F5: Skaliert die Berechnung über den Hauptspeicher hinaus? | §4 |
+
 **Aufbau:** §1 Profiling der Benchmarks, §2 Matching-Güte, §3 was die
 Matching-Güte erklärt, §4 Skalierbarkeit, §5 Grenzen.
 

@@ -4,6 +4,28 @@ Big-Data-Praktikum SoSe 2026, Universität Leipzig (Lehrstuhl Datenbanken, Prof.
 Thema 11, Betreuer Marvin Hofer.
 Bearbeitet von Aische Vera Spieker und Berkay Ethem Özcekic.
 
+## Forschungsfrage
+
+> **Welche strukturellen und semantischen Eigenschaften von
+> Entity-Alignment-Benchmarks bestimmen, wie gut ein Matching-Verfahren auf
+> ihnen abschneidet — und hängt das davon ab, welche Art von Verfahren man
+> einsetzt?**
+
+Zwei Teilfragen:
+
+1. **Deskriptiv:** Wie unterscheiden sich gängige Benchmarks in Größe,
+   Struktur, Vollständigkeit, Schema und Gold-Standard? (→ Profiling)
+2. **Erklärend:** Welche dieser Unterschiede schlagen messbar auf die
+   Matching-Güte durch, und tun sie das für textuelle und strukturelle
+   Verfahren gleichermaßen? (→ Matching + Korrelation)
+
+**Warum das relevant ist:** Wer ein neues Verfahren auf einem einzelnen
+Benchmark evaluiert, misst unvermeidlich die Eigenschaften dieses Benchmarks
+mit. Unser Ergebnis zeigt, dass das kein theoretisches Problem ist — derselbe
+strukturelle Matcher erreicht auf `D_Y` F1 0,65 und auf `EN_FR` 0,26, während
+sich der textuelle Matcher genau umgekehrt verhält. Zwei Benchmarks, zwei
+gegensätzliche Aussagen darüber, welches Verfahren besser ist.
+
 ## Worum es geht
 
 Entity-Alignment-Verfahren werden auf Benchmark-Datensätzen verglichen, deren
@@ -15,8 +37,7 @@ Dieses Projekt baut ein Framework, das
 
 1. Benchmark-Datensätze systematisch **profiliert** (Metriken-Katalog, 11 Metrik-Gruppen),
 2. auf denselben Datensätzen fünf **Entity-Alignment-Matcher** ausführt und bewertet,
-3. beides **korreliert**: welche Datensatz-Eigenschaft erklärt, wie gut welches
-   Verfahren funktioniert?
+3. beides **korreliert** und in kontrollierten Vergleichen prüft.
 
 Schritt 3 ist der eigentliche Beitrag — Profiling allein sagt noch nicht, ob
 ein Benchmark für seine Aufgabe taugt.
