@@ -22,12 +22,16 @@ ENV/
 .ipynb_checkpoints/
 *.ipynb_checkpoints
 
-# IDE / editor
+# IDE / editor / lokale Tool-Konfiguration
 .vscode/
 .idea/
+.claude/
 *.swp
 *.swo
 .DS_Store
+
+# Lokale Notizen, Mail-Entwuerfe usw. - nie versionieren
+local/
 
 # Datasets are large and licensed; never commit
 data/raw/**
