@@ -75,7 +75,7 @@ Ergebnis (Mittel über die sechs Datensätze):
 | `value_overlap` | 0,531 | 0,473 | 0,661 | 0,504 |
 | `pyjedai_ngram` | 0,409 | 0,358 | 0,555 | 0,412 |
 | `structural_propagation` | 0,500 | 0,187 | 0,710 | 0,251 |
-| `paris` | 0,835 | 0,697 | 0,967 | 0,808 |
+| `paris` | 0,835 | 0,697 | 0,966 | 0,809 |
 
 Auch PARIS verliert 14 F1- und 16 Precision-Punkte. Die auf OpenEA berichteten
 Werte sind also generell optimistisch, nicht nur unsere.
@@ -135,6 +135,14 @@ Standard-Workflow für Clean-Clean Entity Resolution ein:
 Damit kommen Blocking, Kandidaten-Pruning und eine kalibrierte Zuordnungsstufe
 aus der Bibliothek statt aus Eigenbau. Auch der Hinweis auf n-Gramme ist damit
 umgesetzt.
+
+**Warum pyJedAI und nicht `recordlinkage`?** Genannt waren beide.
+`recordlinkage` erwartet, dass man den Blocking-Schlüssel selbst festlegt — bei
+OpenEA v2.0 gibt es dafür kein naheliegendes Feld, weil die Entitäten weder
+Labels noch sprechende URIs haben, sondern nur eine Menge heterogener
+Literalwerte. Genau die Stufe, die uns gefehlt hat, hätten wir dort also wieder
+selbst bauen müssen. pyJedAI bringt Blocking und Block-Bereinigung mit. Der
+Modulname `record_linkage.py` bezeichnet das Problem, nicht die Bibliothek.
 
 Ein Nebenergebnis, das wir offen berichten: die Bibliothek schlägt unseren
 einfachen `value_overlap` **nicht** (F1 0,409 vs. 0,531). Der Grund liegt in

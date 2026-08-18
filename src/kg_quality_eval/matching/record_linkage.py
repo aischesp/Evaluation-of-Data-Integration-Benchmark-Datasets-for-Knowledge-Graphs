@@ -1,5 +1,15 @@
 """Wertbasiertes Matching über pyJedAI — eine etablierte Record-Linkage-Bibliothek.
 
+Der Modulname bezeichnet das Problem (Record Linkage: Datensätze einer Tabelle
+aufeinander abbilden), nicht die Bibliothek. Empfohlen waren zwei Kandidaten,
+`recordlinkage` und pyJedAI. Die Wahl fiel auf pyJedAI, weil es den kompletten
+Clean-Clean-ER-Workflow inklusive Blocking, Block-Bereinigung,
+Kandidaten-Pruning und einer Zuordnungsstufe mitbringt. `recordlinkage`
+erwartet, dass man den Blocking-Schlüssel selbst festlegt — bei OpenEA v2.0
+gibt es dafür kein naheliegendes Feld, weil die Entitäten weder Labels noch
+sprechende URIs haben, sondern nur eine Menge heterogener Literalwerte. Genau
+die Stufe, die uns fehlte, hätten wir dort also wieder selbst bauen müssen.
+
 Warum eine Bibliothek statt einer Eigenimplementierung: Ein wertbasierter
 Matcher braucht mehr als eine Ähnlichkeitsfunktion. Er braucht Blocking (damit
 nicht |E1| x |E2| Paare verglichen werden), Block-Bereinigung (überfüllte Blöcke

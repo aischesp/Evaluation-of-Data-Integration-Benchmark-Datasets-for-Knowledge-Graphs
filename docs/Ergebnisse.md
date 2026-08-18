@@ -204,34 +204,38 @@ Zuordnungsstufe, die wir sonst selbst hätten bauen müssen.
 
 V1 und V2 eines Quellenpaares enthalten **dieselben Entitäten**; die
 Relations-Tripel wachsen um Faktor 1,81–2,27, die Attribut-Tripel nur um
-0,97–1,21. Es ändert sich also fast ausschliesslich die Struktur.
-
-Auf dem Kernlauf, `EN_FR_15K` V1 gegen V2, mit den überarbeiteten Matchern:
+0,97–1,21. Es ändert sich also fast ausschliesslich die Struktur. Gemittelt
+über alle vier Quellenpaare und beide Größen (n = 8 Paare):
 
 | Matcher | V1 sparse | V2 dense | Δ |
 | ------- | --------: | -------: | ---: |
-| `value_overlap` | 0,560 | 0,584 | +0,02 |
-| `pyjedai_ngram` | 0,447 | 0,504 | +0,06 |
-| `structural_propagation` | 0,390 | 0,639 | **+0,25** |
-| `paris` | 0,809 | 0,892 | +0,08 |
+| `value_overlap` (wertbasiert) | 0,470 | 0,445 | **−0,03** |
+| `structural_propagation` | 0,498 | 0,733 | **+0,24** |
+| `paris` | 0,825 | 0,908 | +0,08 |
 
-Verdopplung der Graphdichte verbessert das strukturelle Verfahren um ein
-Vielfaches dessen, was die wertbasierten gewinnen. Das ist keine Korrelation,
-sondern ein Experiment mit genau einer veränderten Variable.
+Verdopplung der Graphdichte verbessert das strukturelle Verfahren um 24
+F1-Punkte und lässt das wertbasierte unverändert (im Rahmen des Rauschens
+minimal schlechter). Das ist keine Korrelation, sondern ein Experiment mit
+genau einer veränderten Variable — und genau die Verfahrensfamilie, die diese
+Variable nutzt, reagiert darauf.
 
-Über alle vier Quellenpaare und beide Größen gemittelt (n = 8 Paare) ergab
-derselbe Vergleich mit der vorherigen Matcher-Generation +0,28 für das
-strukturelle und −0,02 für das wertbasierte Verfahren — die Richtung und die
-Größenordnung sind also stabil. Die Neuberechnung dieses Mittels mit den
-überarbeiteten Matchern steht noch aus
-(`config/datasets_extended.yaml`).
+Auf dem Kernlauf einzeln nachvollziehbar an `EN_FR_15K` V1 → V2:
+`structural_propagation` 0,390 → 0,639, `value_overlap` 0,560 → 0,584.
 
 ### 3.2 Skalen-Effekt
 
 15 K → 100 K Entitäten, der Kandidatenraum wächst um Faktor 44
-(2,25·10⁸ → 10¹⁰). Alle Verfahren verlieren; am stärksten trifft es die
-wertbasierten, weil exakte Werte, die bei 15 K noch eindeutig identifizieren,
-bei 100 K mit mehreren Kandidaten kollidieren.
+(2,25·10⁸ → 10¹⁰). Gemittelt über 8 Paare:
+
+| Matcher | 15 K | 100 K | Δ |
+| ------- | ---: | ----: | ---: |
+| `paris` | 0,883 | 0,850 | −0,03 |
+| `structural_propagation` | 0,641 | 0,590 | −0,05 |
+| `value_overlap` | 0,526 | 0,389 | **−0,14** |
+
+Am stärksten trifft es das wertbasierte Verfahren: exakte Literalwerte, die bei
+15 K noch eindeutig identifizieren, kollidieren bei 100 K mit mehreren
+Kandidaten.
 
 ### 3.3 Seed-Größe
 
@@ -256,42 +260,46 @@ Datensatz-Eigenschaften.
 
 ## 4. Was erklärt die Matching-Güte?
 
-Spearman-Rangkorrelation über alle 16 OpenEA-Varianten. **Diese Werte stammen
-aus dem Lauf mit der vorherigen Matcher-Generation**; die Neuberechnung mit den
-überarbeiteten Matchern steht aus. Die Aussage betrifft die Verfahrensfamilien,
-nicht die konkreten Implementierungen, und die Familienzuordnung hat sich nicht
-geändert.
+Spearman-Rangkorrelation über alle 16 OpenEA-Varianten.
 
-**Strukturelles Verfahren — reagiert auf Struktur:**
+**Strukturelles Verfahren — hängt an der Struktur:**
 
 | Metrik | ρ | p |
 | ------ | ---: | ---: |
-| Relations-Property-Entropie | −0,738 | 0,001 |
-| ø Total-Grad | +0,703 | 0,002 |
-| Median-Grad (schwächerer KG) | +0,660 | 0,005 |
-| Gold-Paare in größter Komponente | +0,656 | 0,006 |
+| Relations-Property-Entropie | −0,724 | 0,002 |
+| Median-Grad (schwächerer KG) | +0,679 | 0,004 |
+| ø Total-Grad | +0,676 | 0,004 |
+| Gold-Paare in größter Komponente | +0,624 | 0,010 |
+| Entitäten in größter Komponente | +0,609 | 0,012 |
 
-**Wertbasiertes Verfahren — reagiert auf Literale, nicht auf Struktur:**
+Vier der fünf stärksten Prädiktoren sind Struktur-Metriken, alle mit p < 0,02.
+
+**Wertbasiertes Verfahren — hängt nicht an der Struktur:**
 
 | Metrik | ρ | p |
 | ------ | ---: | ---: |
-| Literal-Jaccard der Gold-Paare | +0,612 | 0,012 |
-| Gesamtzahl Tripel (Größeneffekt) | −0,603 | 0,013 |
-| Grad-Korrelation der Gold-Paare | +0,497 | 0,050 |
+| Gesamtzahl Tripel (Größeneffekt) | −0,697 | 0,003 |
+| Property-Überlappung der Schemata | +0,553 | 0,026 |
+| Grad-Korrelation der Gold-Paare | +0,503 | 0,047 |
+| ø Total-Grad | −0,303 | 0,254 |
+| Median-Grad | −0,149 | 0,583 |
 
-Vier der fünf stärksten Prädiktoren des strukturellen Verfahrens sind
-Struktur-Metriken; beim wertbasierten schafft es keine Grad-Metrik in die
-Spitzengruppe.
+**Der Kontrast ist die eigentliche Aussage:** Der mittlere Grad korreliert beim
+strukturellen Verfahren mit ρ = +0,68 (p = 0,004), beim wertbasierten mit
+ρ = −0,30 (p = 0,25). Dieselbe Datensatz-Eigenschaft ist für das eine Verfahren
+der zweitstärkste Prädiktor und für das andere ohne Erklärungswert.
+
+Was wir **nicht** belegen können: dass die Literal-Überlappung der Gold-Paare
+das wertbasierte Verfahren treibt. Sie korreliert nur mit ρ = +0,31 (p = 0,24)
+und ist damit nicht signifikant. Dominierend ist dort der reine Größeneffekt.
 
 `paris` hat einen dominanten Prädiktor, die Relations-Property-Entropie
-(ρ = −0,871, p < 0,001); alles andere liegt unter 0,45 und ist nicht
+(ρ = −0,847, p < 0,001); alle übrigen liegen unter 0,43 und sind nicht
 signifikant. Das passt zu seiner durchgängig hohen Precision.
 
 **Einschränkung.** Entropie und Grad sind auf diesen Daten korreliert, und die
 16 Varianten sind keine unabhängigen Stichproben (4 Quellenpaare × 2 Größen ×
 2 Dichten). Die kontrollierten Vergleiche aus §3 sind das stärkere Argument.
-
----
 
 ## 5. Was passiert ohne Bijektivität?
 
@@ -321,6 +329,16 @@ Drei Aussagen daraus:
 3. **Die Precision fällt bei allen Verfahren um 14–46 Punkte.** Genau diese
    Fehlerart — eine Vorhersage für etwas, das keinen Partner hat — kann ein
    bijektiver Benchmark prinzipiell nicht messen.
+
+Dass die Varianten wirklich nicht mehr bijektiv sind, ist an den Profiling-
+Kennzahlen nachprüfbar — `alignment_coverage` fällt von 1,000 auf 0,667,
+`entity_coverage_kg2` ebenso, und `non_match_share_kg1` liegt bei 0,333.
+
+Über alle sechs Datensätze summierte False Positives auf partnerlosen
+Entitäten: `value_overlap` 17 579, `structural_propagation` 10 279,
+`pyjedai_ngram` 6 591, `paris` 5 725. Die Rangfolge ist eine andere als beim
+F1 — PARIS ist hier mit Abstand am zurückhaltendsten, `value_overlap` trotz
+gutem F1 am fehleranfälligsten.
 
 Absolute Zahl der False Positives auf partnerlosen Entitäten (Test-Split):
 
@@ -359,10 +377,9 @@ Der komplette Kernlauf (6 Datensätze × 11 Metriken × 4 Matcher) dauert rund
 | Nur OpenEA als Quelle | Aussagen gelten für diese Benchmark-Familie |
 | 16 Varianten, aber nur 4 unabhängige Quellenpaare | effektive Stichprobe der Korrelationen kleiner als n = 16 |
 | Nur ein Fold ausgewertet | Streuung über die fünf 721-Folds nicht quantifiziert |
-| Korrelationen (§4) und das gemittelte Dichte-Experiment noch aus dem Lauf mit der vorherigen Matcher-Generation | Richtung bestätigt sich im Kernlauf (§3.1), das Mittel über 8 Paare ist neu zu rechnen |
 | Zwei der vier Verfahren sind Eigenimplementierungen | absolute Niveaus unter dem Stand der Technik; die Familien-Kontraste sind davon nicht betroffen |
 | Kein embedding-basiertes Verfahren | die für OpenEA typische Verfahrensklasse fehlt |
-| `pyjedai_ngram` nicht auf 100K | Laufzeit; in der Auswertung als fehlender Wert ausgewiesen |
+| `pyjedai_ngram` nicht auf 100K und nicht im erweiterten Lauf | Laufzeit (expliziter Kandidatengraph); deckt 5 der 6 Kern-Datensätze ab |
 | Non-Match-Varianten mit einer festen Quote (33 %) | der Verlauf über verschiedene Quoten ist nicht vermessen |
 
 ### Naheliegende Fortsetzung
@@ -378,9 +395,10 @@ Der komplette Kernlauf (6 Datensätze × 11 Metriken × 4 Matcher) dauert rund
 ## 8. Zusammenfassung
 
 1. Verdopplung der Graphdichte bei identischer Entitätsmenge verbessert
-   strukturelles Matching um 0,28 F1 und wertbasiertes um null.
-2. Wert- und strukturbasierte Verfahren korrelieren nachweislich mit
-   unterschiedlichen Datensatz-Eigenschaften.
+   strukturelles Matching um 0,24 F1 und wertbasiertes um null.
+2. Wert- und strukturbasierte Verfahren hängen an unterschiedlichen
+   Eigenschaften: der mittlere Grad erklärt das strukturelle Verfahren
+   (ρ = +0,68) und das wertbasierte nicht (ρ = −0,30, nicht signifikant).
 3. Die Seed-Größe dominiert das Ergebnis semi-supervised Verfahren stärker als
    die meisten Datensatz-Eigenschaften und wird selten mitberichtet.
 4. Sobald Entitäten ohne Gegenstück existieren, verlieren **alle** Verfahren

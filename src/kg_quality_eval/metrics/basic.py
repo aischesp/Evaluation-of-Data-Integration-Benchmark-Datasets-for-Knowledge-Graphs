@@ -20,7 +20,8 @@ class BasicStatistics(BaseMetric):
             for k, v in _kg_stats(kg).items():
                 s[f"{kg_label}.{k}"] = v
 
-        n_align = len(kg_pair.alignments.drop_duplicates(subset=["e1", "e2"]))
+        # Nur echte Gold-Paare, keine partnerlosen Entitaeten (leeres e2).
+        n_align = len(kg_pair.matched().drop_duplicates(subset=["e1", "e2"]))
         s["alignments.n"] = float(n_align)
         min_ent = min(kg_pair.kg1.n_entities(), kg_pair.kg2.n_entities())
         s["alignments.ratio"] = n_align / min_ent if min_ent else 0.0

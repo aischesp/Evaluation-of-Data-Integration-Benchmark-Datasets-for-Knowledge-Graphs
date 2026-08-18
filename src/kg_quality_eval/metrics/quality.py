@@ -203,7 +203,8 @@ class AlignedEntityConsistency(BaseMetric):
     def compute(self, kg_pair: KGPair) -> MetricResult:
         from scipy.stats import pearsonr, spearmanr
 
-        align = kg_pair.alignments.drop_duplicates(subset=["e1", "e2"])
+        # Konsistenz ist nur fuer echte Paare definiert.
+        align = kg_pair.matched().drop_duplicates(subset=["e1", "e2"])
         if align.empty:
             return MetricResult(name=self.name, scalar_values={})
 

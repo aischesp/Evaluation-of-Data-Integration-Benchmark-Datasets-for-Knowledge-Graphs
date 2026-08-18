@@ -21,10 +21,11 @@ in den Backup-Teil.
 | 7 | Die Matcher: 2 eigene, 1 Library, PARIS | 0:50 | B |
 | 8 | Befund 1: Profiling deckt Benchmark-Schwächen auf | 1:00 | B |
 | 9 | Befund 2: Dichte-Experiment (Kernfolie) | 1:30 | B |
-| 10 | Befund 3: Familien reagieren auf verschiedene Metriken | 1:00 | B |
+| 10 | Befund 3: Familien reagieren auf verschiedene Metriken | 0:50 | B |
+| 10b | Befund 4: was Bijektivität verdeckt | 0:50 | B |
 | 11 | Skalierbarkeit: Pandas ≡ PySpark | 0:40 | A |
 | 12 | Fazit und Grenzen | 0:40 | A |
-| | **Summe** | **~10:00** | |
+| | **Summe** | **~10:45** | |
 
 ---
 
@@ -48,9 +49,9 @@ vermessen haben.**
 - Nicht dokumentiert: Grad-Verteilung, Attribut-Vollständigkeit, Struktur des
   Gold-Standards, Property-Verteilung
 
-*Aufhänger:* Vorgriff auf Folie 10 — derselbe Matcher erreicht auf zwei gleich
-großen Benchmarks derselben Quelle F1 0,20 bzw. 0,51. Der Unterschied liegt
-nicht am Verfahren.
+*Aufhänger:* Vorgriff auf Folie 9 — verdoppelt man die Graphdichte bei
+identischer Entitätsmenge, gewinnt das strukturelle Verfahren 0,24 F1 und das
+wertbasierte null. Der Unterschied liegt am Benchmark, nicht am Verfahren.
 
 ---
 
@@ -175,9 +176,9 @@ Figure `results/figures_extended/contrast_density.png`.
 
 | Matcher | V1 (sparse) | V2 (dense) | Δ |
 | ------- | ----------: | ---------: | ---: |
-| `value_overlap` (wertbasiert) | 0,475 | 0,451 | −0,02 |
-| `structural_propagation` | 0,334 | 0,614 | **+0,28** |
-| `paris` | 0,824 | 0,908 | +0,08 |
+| `value_overlap` (wertbasiert) | 0,470 | 0,445 | −0,03 |
+| `structural_propagation` | 0,498 | 0,733 | **+0,24** |
+| `paris` | 0,825 | 0,908 | +0,08 |
 
 Warum das ein sauberes Experiment ist: V1 und V2 enthalten **dieselben
 Entitäten**; die Relations-Tripel wachsen um Faktor ~2, die Attribut-Tripel
@@ -192,29 +193,73 @@ Kandidatenraum durch die zusätzlichen Kanten aber leicht wächst.
 
 ---
 
-## Folie 10 — Befund 3: Familien reagieren auf verschiedene Metriken
+## Folie 10 — Befund 3: Familien hängen an verschiedenen Eigenschaften
 
-**Kernaussage: Es gibt nicht "den schweren Benchmark" — Schwierigkeit ist
+**Kernaussage: Es gibt nicht „den schweren Benchmark" — Schwierigkeit ist
 relativ zum Verfahren.**
 
-Figure `results/figures_extended/correlation_heatmap.png`, dazu die beiden
-Spitzenlisten (n = 16):
+Figure `results/figures_extended/correlation_heatmap.png`. Der schärfste
+Einzelvergleich (Spearman, n = 16):
 
-| `structural_propagation` | ρ | | `value_overlap` (wertbasiert) | ρ |
-| ------------------------ | ---: | --- | --------------- | ---: |
-| ø Total-Grad | +0,70 | | Literal-Jaccard der Gold-Paare | +0,61 |
-| Median-Grad | +0,66 | | Attribut-Tripel/Entität | −0,56 |
-| Gold-Paare in größter Komponente | +0,66 | | Grad-Korrelation der Gold-Paare | +0,50 |
+| Datensatz-Eigenschaft | strukturell | wertbasiert |
+| --------------------- | ----------: | ----------: |
+| ø Total-Grad | **+0,68** (p = 0,004) | −0,30 (p = 0,25) |
+| Median-Grad | **+0,68** (p = 0,004) | −0,15 (p = 0,58) |
+| Gold-Paare in größter Komponente | **+0,62** (p = 0,010) | — |
+| Gesamtzahl Tripel (Größe) | — | **−0,70** (p = 0,003) |
 
-Und das Beispiel, das es plastisch macht: derselbe strukturelle Matcher
-erreicht auf `D_Y` F1 0,65 und auf `EN_FR` 0,26 — der textuelle Matcher genau
-umgekehrt. Die beiden Benchmarks führen zu **gegensätzlichen** Aussagen
-darüber, welches Verfahren besser ist.
+Dieselbe Kennzahl — der mittlere Grad — ist für das eine Verfahren der
+zweitstärkste Prädiktor und für das andere ohne Erklärungswert.
+
+Plastisch nach Quellenpaar (ø F1 über Größen und Dichten):
+
+| Matcher | D_W | D_Y | EN_DE | EN_FR |
+| ------- | --: | --: | ----: | ----: |
+| `value_overlap` | 0,353 | 0,457 | 0,506 | **0,514** |
+| `structural_propagation` | 0,618 | **0,737** | 0,628 | 0,479 |
+
+Für das wertbasierte Verfahren ist `EN_FR` der leichteste Fall, für das
+strukturelle der schwerste.
 
 Übergreifend stärkster Einzelprädiktor: die **normierte Entropie der
-Relations-Property-Verteilung** (bei PARIS ρ = −0,87). Konzentriertes
+Relations-Property-Verteilung** (bei PARIS ρ = −0,85). Konzentriertes
 Vokabular ⇒ wiedererkennbare Nachbarschaften. Diese Kennzahl wird in
 Datensatz-Beschreibungen nie berichtet.
+
+*Ehrlich dazusagen:* Die Literal-Überlappung der Gold-Paare korreliert mit dem
+wertbasierten Verfahren nur mit ρ = +0,31 (p = 0,24) — das ist **nicht**
+signifikant. Dort dominiert der reine Größeneffekt.
+
+---
+
+## Folie 10b — Befund 4: was Bijektivität verdeckt
+
+**Kernaussage: Sobald Entitäten ohne Gegenstück existieren, verlieren alle
+Verfahren massiv Precision — auch PARIS.**
+
+Die OpenEA-Benchmarks sind strikt 1:1. Wir haben das kontrolliert aufgebrochen
+(`preprocessing/nonmatch.py`): 33 % der Entitäten haben danach keinen Partner.
+
+| Matcher | Precision bijektiv | Precision mit Non-Matches | Δ |
+| ------- | -----------------: | ------------------------: | ---: |
+| `value_overlap` | 0,661 | 0,504 | −0,16 |
+| `pyjedai_ngram` | 0,555 | 0,412 | −0,14 |
+| `structural_propagation` | 0,710 | 0,251 | **−0,46** |
+| `paris` | 0,966 | 0,809 | −0,16 |
+
+**Nicht F1 in den Vordergrund stellen, sondern die Fehlerart.** Die relevante
+Zahl ist `n_false_on_unmatched`: Vorhersagen für Entitäten, die korrekt keinen
+Partner haben. Auf `EN_FR_15K_V1` sind das 1 612 (value_overlap), 825
+(strukturell) und 501 (PARIS). Ein bijektiver Benchmark kann diese Fehlerart
+prinzipiell nicht messen.
+
+> **Vorbereitete Antwort**, falls die niedrigen F1-Werte angesprochen werden:
+> „Auf den Non-Match-Varianten fällt unser strukturelles Verfahren auf F1 0,187.
+> Das ist kein Implementierungsproblem, sondern das Ergebnis: die Aufgabe wird
+> dort doppelt schwerer, weil die entfernten Entitäten ihre Kanten mitnehmen und
+> sich die Seed-Menge halbiert. Entscheidend ist der Vergleich — PARIS verliert
+> im selben Szenario 14 F1- und 16 Precision-Punkte. Die auf OpenEA berichteten
+> Zahlen sind also generell optimistisch, nicht nur unsere."
 
 ---
 

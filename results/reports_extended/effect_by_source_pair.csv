@@ -1,6 +1,4 @@
 matcher,D_W,D_Y,EN_DE,EN_FR
-literal_tfidf,0.134,0.182,0.205,0.269
-value_overlap,0.364,0.464,0.513,0.511
-structural_propagation,0.431,0.653,0.551,0.262
-hybrid,0.415,0.544,0.523,0.389
-paris,0.792,0.948,0.899,0.825
+value_overlap,0.353,0.457,0.506,0.514
+structural_propagation,0.618,0.737,0.628,0.479
+paris,0.793,0.949,0.899,0.826

@@ -19,7 +19,11 @@ class AlignmentMetrics(BaseMetric):
     category = "quality"
 
     def compute(self, kg_pair: KGPair) -> MetricResult:
-        align = kg_pair.alignments.drop_duplicates(subset=["e1", "e2"])
+        # Nur echte Gold-Paare. Zeilen mit leerem `e2` sind Entitäten, die
+        # bewusst keinen Partner haben (preprocessing/nonmatch.py); sie als
+        # Alignment mitzuzählen würde die Coverage künstlich auf 1,0 heben und
+        # den leeren String als KG2-Entität behandeln.
+        align = kg_pair.matched().drop_duplicates(subset=["e1", "e2"])
         n = len(align)
         n1 = max(kg_pair.kg1.n_entities(), 1)
         n2 = max(kg_pair.kg2.n_entities(), 1)
@@ -65,8 +69,15 @@ class AlignmentMetrics(BaseMetric):
             deg2.mean() / max(kg_pair.kg2.degrees["total_degree"].mean(), 1e-9)
         )
 
+        # Wie viele Entitäten haben korrekterweise keinen Partner? Auf den
+        # unveränderten OpenEA-Benchmarks ist das null; erst die
+        # Non-Match-Varianten machen daraus eine relevante Größe.
+        n_unmatched = len(kg_pair.unmatched())
+        scalars["n_unmatched_kg1"] = float(n_unmatched)
+        scalars["non_match_share_kg1"] = float(n_unmatched / n1)
+
         split_rows = (
-            kg_pair.alignments.groupby("split").size().rename("n_pairs").reset_index()
+            kg_pair.matched().groupby("split").size().rename("n_pairs").reset_index()
         )
         for _, row in split_rows.iterrows():
             scalars[f"split.{row['split']}"] = float(row["n_pairs"])
@@ -90,7 +101,7 @@ class AlignmentReachability(BaseMetric):
     def compute(self, kg_pair: KGPair) -> MetricResult:
         import networkx as nx
 
-        align = kg_pair.alignments.drop_duplicates(subset=["e1", "e2"])
+        align = kg_pair.matched().drop_duplicates(subset=["e1", "e2"])
         if align.empty:
             return MetricResult(name=self.name, scalar_values={})
 
