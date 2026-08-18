@@ -32,6 +32,9 @@ ENV/
 # Lokale Notizen, Mail-Entwuerfe usw. - nie versionieren
 local/
 
+# Praesentationsdrehbuch: bleibt lokal, nicht im Repository
+docs/Praesentation.md
+
 # Datasets are large and licensed; never commit
 data/raw/**
 data/processed/**

@@ -18,7 +18,7 @@ mehreren konkreten Auflagen für die Implementierungsphase.
 | 7 | **Pipeline zuerst bauen**, dann nach und nach Metriken ergänzen | ✅ umgesetzt | §7 unten |
 | 8 | Metriken gruppieren und **tabellarisch** statt als Fließtext | ✅ umgesetzt | `docs/Metriken-Katalog.md` |
 | 9 | **Am Ende zählt der Unterschied auf den Matchern**, nicht nur strukturelle Unterschiede der Datensätze | ✅ umgesetzt | `docs/Ergebnisse.md` §3 |
-| 10 | Auf die **Präsentation** hinarbeiten | ⚠️ Drehbuch fertig, **Folien fehlen** | `docs/Praesentation.md` |
+| 10 | Auf die **Präsentation** hinarbeiten | ⚠️ Drehbuch fertig, **Folien fehlen** | nicht im Repository |
 | 11 | *(Matcher aus dem OpenEA-Paper)* | ❌ **nicht umgesetzt** | §5 unten |
 
 ---

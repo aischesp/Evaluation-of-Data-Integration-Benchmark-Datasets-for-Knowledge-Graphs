@@ -22,7 +22,7 @@ Zwei Teilfragen:
 **Warum das relevant ist:** Wer ein neues Verfahren auf einem einzelnen
 Benchmark evaluiert, misst unvermeidlich die Eigenschaften dieses Benchmarks
 mit. Zwei Belege dafür: Verdopplung der Graphdichte bei identischer
-Entitätsmenge bringt dem strukturellen Verfahren 0,28 F1 und dem wertbasierten
+Entitätsmenge bringt dem strukturellen Verfahren 0,24 F1 und dem wertbasierten
 null. Und sobald der Benchmark Entitäten ohne Gegenstück enthält, verlieren
 alle Verfahren 14–46 Precision-Punkte — auch PARIS.
 
@@ -48,7 +48,7 @@ ein Benchmark für seine Aufgabe taugt.
 | ----- | ----------- | ----- |
 | Testat 1 — Konzeptioneller Entwurf | `docs/Entwurfsdokument.md` | abgeschlossen |
 | Testat 2 — Implementierung | lauffähige Pipeline, `docs/Ergebnisse.md` | abgeschlossen, nach Feedback überarbeitet |
-| Testat 3 — Abschlusspräsentation | `docs/Praesentation.md` | vorbereitet |
+| Testat 3 — Abschlusspräsentation | Drehbuch und Folien (nicht im Repository) | in Arbeit |
 
 Feedback und Umsetzung: `docs/Testat1-Feedback.md`, `docs/Testat2-Feedback.md`.
 
@@ -176,7 +176,7 @@ Matplotlib/Seaborn · PyYAML · pytest/ruff · Java 17 (PARIS, Spark).
 ```
 config/              YAML-Konfigurationen (Kern + erweitert)
 data/                Datensätze (nicht versioniert, via scripts/download_data.py)
-docs/                Entwurf, Metriken-Katalog, Architektur, Ergebnisse, Präsentation
+docs/                Entwurf, Metriken-Katalog, Architektur, Ergebnisse, Feedback
 material/            Aufgabenstellung und Literatur
 results/             Reports und Figures (nicht versioniert)
 scripts/             Datenbeschaffung, Benchmarks, Schwellenwert- und Seed-Analyse
