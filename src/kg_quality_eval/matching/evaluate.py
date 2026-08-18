@@ -1,16 +1,20 @@
-"""Evaluation of matcher predictions against the reference alignment.
+"""Bewertung der Matcher-Vorhersagen gegen das Referenz-Alignment.
 
-All matchers are scored on the *test* split of fold 1, for two reasons:
+Alle Matcher werden auf dem *Test*-Split von Fold 1 bewertet, aus zwei Gründen:
+die OpenEA-Autoren berichten auf demselben Split, und die semi-supervised
+Matcher sehen den Train-Split als Seeds — auf dem gesamten Alignment zu
+bewerten würde sie dafür belohnen, ihre Eingabe zu reproduzieren.
 
-* it is the split the OpenEA authors themselves report on, so our numbers stay
-  comparable to the published ones, and
-* the semi-supervised matchers see the train split as seeds, so evaluating on
-  the full reference alignment would reward them for reproducing their input.
+**Auswertungsumfang.** Bewertet werden alle Entitäten, die im Split stehen.
+Dazu gehören auch Entitäten *ohne* Partner in KG2 (Alignment-Zeile mit leerem
+`e2`, siehe preprocessing/nonmatch.py). Für sie ist jede Vorhersage falsch.
+Genau das macht Schwellenwerte messbar: ein Matcher, der immer den besten
+Kandidaten ausgibt, sammelt hier False Positives ein, während ein Matcher mit
+sinnvollem Threshold sich enthält.
 
-Predictions about entities outside the evaluation universe (the left-hand
-entities of the test split) are ignored rather than counted as false positives
-— otherwise an unsupervised matcher would be punished for also producing
-correct predictions on the training entities.
+Vorhersagen zu Entitäten *ausserhalb* des Splits werden ignoriert statt als
+False Positive gezählt — sonst würde ein unüberwachter Matcher dafür bestraft,
+dass er auch auf den Trainingsentitäten richtig liegt.
 """
 
 from __future__ import annotations
@@ -29,39 +33,44 @@ class EvalScores:
     dataset: str
     split: str
     n_gold: int
+    n_unmatched: int
     n_predicted: int
     n_correct: int
+    n_false_on_unmatched: int
     precision: float
     recall: float
     f1: float
     hits_at_1: float
     coverage: float
+    abstain_rate: float
     runtime_s: float
 
     def as_dict(self) -> dict:
         return asdict(self)
 
 
-def evaluate(
-    result: MatchResult, kg_pair: KGPair, split: str = "test"
-) -> EvalScores:
-    """Precision / recall / F1 of one matcher on one split."""
-    gold_df = kg_pair.split(split) if split != "all" else kg_pair.alignments
+def evaluate(result: MatchResult, kg_pair: KGPair, split: str = "test") -> EvalScores:
+    """Precision / Recall / F1 eines Matchers auf einem Split."""
+    scope = kg_pair.alignments if split == "all" else kg_pair.split(split)
+
+    gold_df = scope[scope["e2"].astype(str) != ""]
     gold = set(zip(gold_df["e1"], gold_df["e2"], strict=False))
-    universe = set(gold_df["e1"])
+
+    universe = set(scope["e1"])                      # inkl. partnerloser Entitäten
+    unmatched = set(scope[scope["e2"].astype(str) == ""]["e1"])
 
     pred_df = result.pairs
     if not pred_df.empty:
         pred_df = pred_df[pred_df["e1"].isin(universe)]
-        pred_df = (
-            pred_df.sort_values("score", ascending=False)
-            .drop_duplicates(subset=["e1"])
-        )
+        pred_df = pred_df.sort_values("score", ascending=False).drop_duplicates(subset=["e1"])
     predicted = set(zip(pred_df["e1"], pred_df["e2"], strict=False))
 
     n_correct = len(predicted & gold)
     n_pred = len(predicted)
     n_gold = len(gold)
+
+    # Vorhersagen für Entitäten, die korrekterweise keinen Partner haben.
+    n_false_on_unmatched = sum(1 for e1, _ in predicted if e1 in unmatched)
 
     precision = n_correct / n_pred if n_pred else 0.0
     recall = n_correct / n_gold if n_gold else 0.0
@@ -72,13 +81,16 @@ def evaluate(
         dataset=result.dataset,
         split=split,
         n_gold=n_gold,
+        n_unmatched=len(unmatched),
         n_predicted=n_pred,
         n_correct=n_correct,
+        n_false_on_unmatched=n_false_on_unmatched,
         precision=precision,
         recall=recall,
         f1=f1,
-        hits_at_1=n_correct / len(universe) if universe else 0.0,
+        hits_at_1=n_correct / n_gold if n_gold else 0.0,
         coverage=n_pred / len(universe) if universe else 0.0,
+        abstain_rate=1.0 - (n_pred / len(universe)) if universe else 0.0,
         runtime_s=result.runtime_s,
     )
 

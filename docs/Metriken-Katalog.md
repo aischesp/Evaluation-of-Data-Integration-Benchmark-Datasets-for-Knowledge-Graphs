@@ -165,34 +165,116 @@ Beschreiben beide Seiten eines Gold-Paars dieselbe Entität vergleichbar?
 ## 4. Matching-Ansätze und Bewertung
 
 Die Profilierung allein sagt noch nichts über die Eignung eines Benchmarks.
-Deshalb führt das Framework auf jedem Datensatz zusätzlich fünf
-Entity-Alignment-Verfahren aus und setzt deren Güte in Beziehung zu den
-Metriken oben.
+Deshalb führt das Framework auf jedem Datensatz zusätzlich Entity-Alignment-
+Verfahren aus und setzt deren Güte in Beziehung zu den Metriken oben.
 
-| Matcher | Familie | Genutztes Signal | Seeds | Implementierung |
-| ------- | ------- | ---------------- | ----- | --------------- |
-| `literal_tfidf` | textuell | TF-IDF-Kosinus über Literal-Tokens | nein | `matching/lexical.py` |
-| `value_overlap` | textuell | IDF-gewichtete Überlappung ganzer Literalwerte | nein | `matching/lexical.py` |
-| `structural_propagation` | strukturell | Nachbarschaft über Seeds propagiert, mit Bootstrapping | ja | `matching/structural.py` |
-| `hybrid` | hybrid | Linearkombination textuell + strukturell | ja | `matching/structural.py` |
-| `paris` | holistisch | externes Java-Tool (dig-team/PARIS v0.3), Struktur + Literale | nein | `matching/paris.py` |
+### 4.1 Die Verfahren
 
-**Bewertung** (`matching/evaluate.py`): Alle Matcher werden auf dem
-**Test-Split von Fold 1** (70 % von $M$) bewertet. Die semi-supervised Matcher
-sehen den Train-Split (20 %) als Seeds, Parameter wurden auf dem Valid-Split
-(10 %) gewählt. Vorhersagen zu Entitäten außerhalb des Test-Splits werden
-ignoriert statt als False Positive gezählt — sonst würde ein unüberwachter
-Matcher dafür bestraft, dass er auch auf den Trainingsentitäten richtig liegt.
+**Zwei eigene Verfahren, eine Standard-Bibliothek, ein Referenzsystem.** Die
+beiden eigenen sind bewusst so gebaut, dass jedes *ein* Signal isoliert nutzt —
+nur so lässt sich messen, welche Datensatz-Eigenschaft auf welche
+Verfahrensart wirkt.
+
+| Matcher | Familie | Signal | Seeds | Herkunft |
+| ------- | ------- | ------ | ----- | -------- |
+| `value_overlap` | wertbasiert | exakte Literalwerte, IDF-gewichtet | nein | eigen |
+| `pyjedai_ngram` | wertbasiert | Zeichen-n-Gramme + Blocking | nein | **pyJedAI** |
+| `structural_propagation` | strukturell | gerichtete, typisierte Nachbarschaft | ja | eigen |
+| `paris` | holistisch | Struktur + Literale, iterativ | nein | **PARIS v0.3** |
+
+Nicht enthalten und bewusst gestrichen:
+
+- **TF-IDF über Literal-Tokens.** Fachlich zu nah am Wertvergleich, ohne
+  eigenen Erkenntniswert.
+- **Ein eigener Hybrid-Matcher.** PARIS *ist* bereits ein hybrides Verfahren —
+  es alignt Entitäten, Relationen und Klassen gemeinsam und iteriert das. Eine
+  eigene Linearkombination zweier Verfahren wäre kein eigenständiger Ansatz,
+  sondern nur eine Ensembling-Variante.
+
+### 4.2 Struktureller Matcher im Detail
+
+Der entscheidende Punkt ist, dass Relationstypen zwischen zwei KGs nicht
+direkt vergleichbar sind (`dbo:birthPlace` vs. `wdt:P19`; bei D_W und D_Y ist
+die Property-Überlappung exakt null). Die Relationen werden deshalb zuerst
+**selbst aligniert**, allein aus der Seed-Evidenz:
+
+> Sind (a, b) und (x, y) bekannte Seed-Paare und gilt in KG1 `a --r1--> x`
+> sowie in KG2 `b --r2--> y`, ist das ein Beleg dafür, dass r1 und r2 dieselbe
+> Beziehung ausdrücken.
+
+Zusätzlich wird die Gegenrichtung geprüft (`y --r2--> b`), weil zwei KGs
+dieselbe Beziehung oft invers modellieren. Erst danach werden die
+Nachbarschaften typisiert verglichen, getrennt nach ein- und ausgehenden
+Kanten und gewichtet mit der Alignment-Evidenz.
+
+| Parameter | Wert | Herkunft |
+| --------- | ---- | -------- |
+| `iterations` | 5 | Valid-Split |
+| `top_relations` | 200 | Valid-Split |
+| `untyped_weight` | 0,3 | Valid-Split |
+| `bootstrap_threshold` | 0,1 (Mindestabstand zum Zweitbesten) | Valid-Split |
+| `min_score` | 0,1 | Threshold-Sweep, s. u. |
+
+### 4.3 Schwellenwerte
+
+Jeder Matcher hat einen echten Schwellenwert: darunter gibt er **keine**
+Vorhersage ab, statt den besten verfügbaren Kandidaten zu nehmen. Die Werte
+sind auf dem Valid-Split abgetastet (`scripts/tune_thresholds.py`, Raster
+0,0–0,9), nicht gesetzt:
+
+| Matcher | Schwellenwert | greift an |
+| ------- | ------------- | --------- |
+| `value_overlap` | 0,4 | Kosinus-Ähnlichkeit |
+| `pyjedai_ngram` | 0,2 | Cluster-Ähnlichkeit |
+| `structural_propagation` | 0,1 | **relativer Abstand zum Zweitbesten** |
+
+Beim strukturellen Matcher greift der Schwellenwert bewusst nicht am Score:
+dessen Scores sind zeilenweise normiert, der Bestwert ist also immer 1,0 und
+ein Score-Schwellenwert damit wirkungslos. Konfidenzmass ist dort
+(top1 − top2) / top1.
+
+### 4.4 Bewertung
+
+Bewertet wird auf dem **Test-Split von Fold 1** (70 % von M). Die
+semi-supervised Matcher sehen den Train-Split (20 %) als Seeds, Parameter
+wurden auf dem Valid-Split (10 %) gewählt.
+
+**Auswertungsumfang:** alle Entitäten des Splits — auch die *ohne* Partner in
+KG2 (siehe §4.5). Für sie ist jede Vorhersage falsch. Vorhersagen zu Entitäten
+ausserhalb des Splits werden ignoriert statt als False Positive gezählt, sonst
+würde ein unüberwachter Matcher dafür bestraft, dass er auch auf den
+Trainingsentitäten richtig liegt.
 
 | Kennzahl | Definition |
 | -------- | ---------- |
-| `precision` | korrekte Paare / vorhergesagte Paare (im Test-Universum) |
-| `recall` | korrekte Paare / Gold-Paare |
+| `precision` | korrekte / vorhergesagte Paare |
+| `recall` | korrekte / Gold-Paare |
 | `f1` | harmonisches Mittel |
-| `hits_at_1` | Anteil Test-Entitäten mit korrektem Top-1-Partner |
-| `coverage` | Anteil Test-Entitäten, für die überhaupt vorhergesagt wurde |
+| `abstain_rate` | Anteil Entitäten ohne Vorhersage |
+| `n_false_on_unmatched` | Vorhersagen für Entitäten, die korrekt keinen Partner haben |
 
----
+### 4.5 Non-Match-Varianten der Benchmarks
+
+Die OpenEA-Benchmarks sind strikt bijektiv (`alignment_coverage` = 1,0,
+`bijective_share` = 1,0). Damit ist es immer richtig, für jede Entität
+*irgendeinen* Partner vorherzusagen — ein fehlender Schwellenwert fällt gar
+nicht auf.
+
+`preprocessing/nonmatch.py` bricht das auf. Aus dem Referenz-Alignment werden
+drei Gruppen gebildet: `keep` (beide Seiten bleiben), `drop_left` (die
+KG1-Seite wird entfernt, die KG2-Seite wird partnerlos) und `drop_right`
+(umgekehrt). Alle Tripel entfernter Entitäten verschwinden mit.
+
+Bei `match_ratio = 0.5` behält ein 15 000er Benchmark 7 500 Gold-Paare; beide
+KGs haben danach 11 250 Entitäten, davon 3 750 ohne Partner — eine
+Non-Match-Quote von 33 %. Konfiguration in `config/datasets_nonmatch.yaml`.
+
+### 4.6 Seed-Größe
+
+Wie viel Referenz-Alignment ein semi-supervised Matcher braucht, ist eine
+Hyperparameter-Frage und wird in `scripts/analyze_seed_size.py` gemessen
+(5 %, 10 %, 25 %, 50 %, 75 %, 100 % des Train-Splits). Ergebnis in
+`docs/Ergebnisse.md`.
 
 ## 5. Output-Format
 

@@ -7,7 +7,7 @@ for our own matchers, and it is the approach the supervisor named explicitly.
 
 It is a Java program without a Python API, so this wrapper
 
-  1. exports both KGs to N-Triples (see loaders/rdf_export.py),
+  1. exports both KGs to N-Triples via rdflib (see loaders/rdf_export.py),
   2. runs `java -jar paris.jar <kg1.nt> <kg2.nt> <outdir>`,
   3. reads the entity equivalences of the last completed iteration,
   4. maps the URIs back onto the original OpenEA identifiers.
@@ -25,7 +25,7 @@ from pathlib import Path
 import pandas as pd
 
 from kg_quality_eval.core import KGPair
-from kg_quality_eval.loaders.rdf_export import from_uriref, write_ntriples
+from kg_quality_eval.loaders.rdf_export import from_uriref, write_rdf
 from kg_quality_eval.matching.base import BaseMatcher, MatchResult
 
 ITERATION_FILE = re.compile(r"^(\d+)_eqv\.tsv$")
@@ -63,8 +63,8 @@ class ParisMatcher(BaseMatcher):
             shutil.rmtree(run_dir)
         out_dir.mkdir(parents=True, exist_ok=True)
 
-        nt1 = write_ntriples(kg_pair.kg1, run_dir / "kg1.nt", kind="e1")
-        nt2 = write_ntriples(kg_pair.kg2, run_dir / "kg2.nt", kind="e2")
+        nt1, n1 = write_rdf(kg_pair.kg1, run_dir / "kg1.nt", kind="e1")
+        nt2, n2 = write_rdf(kg_pair.kg2, run_dir / "kg2.nt", kind="e2")
 
         log = self._run_paris(nt1, nt2, out_dir)
         pairs, iteration = self._read_output(out_dir)

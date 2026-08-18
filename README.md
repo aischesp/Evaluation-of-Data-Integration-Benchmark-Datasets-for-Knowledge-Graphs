@@ -21,10 +21,10 @@ Zwei Teilfragen:
 
 **Warum das relevant ist:** Wer ein neues Verfahren auf einem einzelnen
 Benchmark evaluiert, misst unvermeidlich die Eigenschaften dieses Benchmarks
-mit. Unser Ergebnis zeigt, dass das kein theoretisches Problem ist — derselbe
-strukturelle Matcher erreicht auf `D_Y` F1 0,65 und auf `EN_FR` 0,26, während
-sich der textuelle Matcher genau umgekehrt verhält. Zwei Benchmarks, zwei
-gegensätzliche Aussagen darüber, welches Verfahren besser ist.
+mit. Zwei Belege dafür: Verdopplung der Graphdichte bei identischer
+Entitätsmenge bringt dem strukturellen Verfahren 0,28 F1 und dem wertbasierten
+null. Und sobald der Benchmark Entitäten ohne Gegenstück enthält, verlieren
+alle Verfahren 14–46 Precision-Punkte — auch PARIS.
 
 ## Worum es geht
 
@@ -36,7 +36,7 @@ Gold-Standards. Diese Eigenschaften beeinflussen die Ergebnisse aber massiv.
 Dieses Projekt baut ein Framework, das
 
 1. Benchmark-Datensätze systematisch **profiliert** (Metriken-Katalog, 11 Metrik-Gruppen),
-2. auf denselben Datensätzen fünf **Entity-Alignment-Matcher** ausführt und bewertet,
+2. auf denselben Datensätzen vier **Entity-Alignment-Matcher** ausführt und bewertet,
 3. beides **korreliert** und in kontrollierten Vergleichen prüft.
 
 Schritt 3 ist der eigentliche Beitrag — Profiling allein sagt noch nicht, ob
@@ -47,10 +47,10 @@ ein Benchmark für seine Aufgabe taugt.
 | Phase | Deliverable | Stand |
 | ----- | ----------- | ----- |
 | Testat 1 — Konzeptioneller Entwurf | `docs/Entwurfsdokument.md` | abgeschlossen |
-| Testat 2 — Implementierung | lauffähige Pipeline, `docs/Ergebnisse.md` | abgeschlossen |
+| Testat 2 — Implementierung | lauffähige Pipeline, `docs/Ergebnisse.md` | abgeschlossen, nach Feedback überarbeitet |
 | Testat 3 — Abschlusspräsentation | `docs/Praesentation.md` | vorbereitet |
 
-Das Feedback aus Testat 1 und seine Umsetzung: `docs/Testat1-Feedback.md`.
+Feedback und Umsetzung: `docs/Testat1-Feedback.md`, `docs/Testat2-Feedback.md`.
 
 ## Schnellstart
 
@@ -76,6 +76,14 @@ Vollständiger Lauf über die sechs Kern-Datensätze (~3 Minuten):
 
 ```bash
 python -m kg_quality_eval.runner --config config/datasets.yaml
+```
+
+Variante mit partnerlosen Entitäten, Schwellenwert-Bestimmung, Seed-Analyse:
+
+```bash
+python -m kg_quality_eval.runner --config config/datasets_nonmatch.yaml
+python scripts/tune_thresholds.py --config config/datasets_nonmatch.yaml
+python scripts/analyze_seed_size.py --config config/datasets.yaml
 ```
 
 Pandas gegen PySpark verifizieren und die Laufzeiten vergleichen:
@@ -125,16 +133,31 @@ gestrichen: das ist Ontology- und nicht Entity-Alignment.
 
 ## Matcher
 
-| Matcher | Familie | Signal | Seeds |
-| ------- | ------- | ------ | ----- |
-| `literal_tfidf` | textuell | TF-IDF-Kosinus über Literal-Tokens | nein |
-| `value_overlap` | textuell | Überlappung ganzer Literalwerte | nein |
-| `structural_propagation` | strukturell | Nachbarschaft über Seeds, mit Bootstrapping | ja |
-| `hybrid` | hybrid | Kombination der beiden | ja |
-| `paris` | holistisch | PARIS v0.3 (dig-team), externes Java-Tool | nein |
+Zwei eigene Verfahren, eine Standard-Bibliothek, ein Referenzsystem. Die
+eigenen sind bewusst so gebaut, dass jedes *ein* Signal isoliert nutzt — nur so
+lässt sich messen, welche Datensatz-Eigenschaft auf welche Verfahrensart wirkt.
 
-Bewertet wird auf dem Test-Split (70 %) von Fold 1; Parameter wurden auf dem
-Valid-Split gewählt, nie auf Test.
+| Matcher | Familie | Signal | Seeds | Schwelle | Herkunft |
+| ------- | ------- | ------ | ----- | -------- | -------- |
+| `value_overlap` | wertbasiert | exakte Literalwerte, IDF-gewichtet | nein | 0,4 | eigen |
+| `pyjedai_ngram` | wertbasiert | Zeichen-3-Gramme + Blocking | nein | 0,2 | pyJedAI |
+| `structural_propagation` | strukturell | gerichtete, typisierte Nachbarschaft | ja | 0,1 | eigen |
+| `paris` | holistisch | Struktur + Literale, iterativ | nein | — | PARIS v0.3 |
+
+PARIS ist selbst bereits ein hybrides Verfahren; ein zusätzlicher eigener
+Hybrid-Matcher wäre keine eigenständige Methode, sondern nur eine
+Linearkombination der anderen. Alle Schwellenwerte sind auf dem Valid-Split
+abgetastet, nicht gesetzt (`scripts/tune_thresholds.py`).
+
+Bewertet wird auf dem Test-Split (70 %) von Fold 1; Seeds kommen nur aus dem
+Train-Split.
+
+### Benchmark-Varianten
+
+Die OpenEA-Benchmarks sind strikt bijektiv — jede Entität hat genau einen
+Partner. `preprocessing/nonmatch.py` bricht das auf und erzeugt Entitäten ohne
+Gegenstück (`config/datasets_nonmatch.yaml`). Erst dort wird messbar, was ein
+fehlender Schwellenwert kostet.
 
 ## Ergebnisse
 
@@ -143,7 +166,8 @@ in `results/figures/`.
 
 ## Tech-Stack
 
-Python 3.11 · pandas · NumPy/SciPy · rdflib (N-Triples-Export für PARIS) ·
+Python 3.11 · pandas · NumPy/SciPy · rdflib (Termkonstruktion und RDF-Export) ·
+pyJedAI (Record Linkage) ·
 NetworkX (Connectivity) · PySpark 4 (zweites Backend für die Kernmetriken) ·
 Matplotlib/Seaborn · PyYAML · pytest/ruff · Java 17 (PARIS, Spark).
 
@@ -155,7 +179,7 @@ data/                Datensätze (nicht versioniert, via scripts/download_data.p
 docs/                Entwurf, Metriken-Katalog, Architektur, Ergebnisse, Präsentation
 material/            Aufgabenstellung und Literatur
 results/             Reports und Figures (nicht versioniert)
-scripts/             Datenbeschaffung, Backend-Benchmark, Config-Generator
+scripts/             Datenbeschaffung, Benchmarks, Schwellenwert- und Seed-Analyse
 src/kg_quality_eval/ Python-Package
 tests/               Unit-Tests (pytest)
 tools/               PARIS-Jar (nicht versioniert)

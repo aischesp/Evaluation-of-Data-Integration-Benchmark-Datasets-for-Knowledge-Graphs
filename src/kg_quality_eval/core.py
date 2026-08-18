@@ -84,9 +84,27 @@ class KGPair:
         return len(self.alignments)
 
     def split(self, name: str) -> pd.DataFrame:
-        """Alignment rows of one split ('train' / 'valid' / 'test')."""
+        """Alle Alignment-Zeilen eines Splits ('train' / 'valid' / 'test').
+
+        Enthält auch Zeilen mit leerem `e2`: das sind Entitäten, die in KG2
+        bewusst keinen Partner haben (siehe preprocessing/nonmatch.py). Sie
+        gehören zum Auswertungsumfang, sind aber kein Gold-Paar.
+        """
         return self.alignments[self.alignments["split"] == name]
 
+    def matched(self, name: str | None = None) -> pd.DataFrame:
+        """Nur echte Gold-Paare, ohne die partnerlosen Entitäten."""
+        df = self.alignments if name is None else self.split(name)
+        return df[df["e2"].astype(str) != ""]
+
+    def unmatched(self, name: str | None = None) -> pd.DataFrame:
+        """Nur die Entitäten ohne Partner in KG2."""
+        df = self.alignments if name is None else self.split(name)
+        return df[df["e2"].astype(str) == ""]
+
     def gold_pairs(self, split: str | None = None) -> set[tuple[str, str]]:
-        df = self.alignments if split is None else self.split(split)
+        df = self.matched(split)
         return set(zip(df["e1"], df["e2"], strict=False))
+
+    def n_matched(self) -> int:
+        return len(self.matched())

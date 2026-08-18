@@ -25,7 +25,6 @@ ENV/
 # IDE / editor / lokale Tool-Konfiguration
 .vscode/
 .idea/
-.claude/
 *.swp
 *.swo
 .DS_Store

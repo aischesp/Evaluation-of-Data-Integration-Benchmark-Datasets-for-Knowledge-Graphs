@@ -20,12 +20,14 @@ flowchart TB
     A[(config/datasets.yaml)] --> B[Loader<br/>OpenEALoader]
     B --> C[Unified Internal Representation<br/>KGPair: entities · rel_triples · attr_triples · alignments]
     C --> D[Metrik-Plugins<br/>basic · structural · quality]
-    C --> E[Matcher<br/>literal_tfidf · value_overlap · structural_propagation · hybrid · paris]
-    E --> F[Evaluation<br/>Precision · Recall · F1 · Hits@1]
+    C --> E[Matcher<br/>value_overlap · pyjedai_ngram · structural_propagation · paris]
+    E --> F[Evaluation<br/>Precision · Recall · F1 · Enthaltung]
     D --> G[Reporting]
     F --> G
     G --> H[(comparison.csv<br/>matching_results.csv<br/>correlation.csv<br/>figures/*.png)]
-    C -.N-Triples via rdflib.-> E
+    C -.RDF-Export via rdflib.-> E
+    B -.optional.-> N[Non-Match-Variante<br/>preprocessing/nonmatch.py]
+    N --> C
     A --> I[Spark-Backend<br/>Kernmetriken relational]
     I --> J[(backend_equivalence.csv)]
 ```
@@ -75,7 +77,7 @@ src/kg_quality_eval/
 ├── loaders/
 │   ├── base.py              abstract BaseLoader
 │   ├── openea.py            OpenEA-Format (TSV)
-│   └── rdf_export.py        N-Triples-Export via rdflib (Input für PARIS)
+│   └── rdf_export.py        RDF-Export/-Import über rdflib.Graph
 ├── metrics/
 │   ├── base.py              abstract BaseMetric, MetricResult
 │   ├── basic.py             Katalog §1
@@ -83,11 +85,12 @@ src/kg_quality_eval/
 │   ├── quality.py           Katalog §3.1–3.3, 3.6
 │   └── alignment.py         Katalog §3.4–3.5
 ├── matching/
-│   ├── base.py              BaseMatcher, SparseScoreMatcher, Sparse-Utilities
-│   ├── lexical.py           literal_tfidf, value_overlap
-│   ├── structural.py        structural_propagation, hybrid
+│   ├── base.py              BaseMatcher, SparseScoreMatcher, Schwellenwerte
+│   ├── lexical.py           value_overlap (exakte Literalwerte, IDF)
+│   ├── record_linkage.py    pyjedai_ngram (Standard-Library)
+│   ├── structural.py        structural_propagation + Relations-Alignment
 │   ├── paris.py             Wrapper um das PARIS-Jar
-│   └── evaluate.py          Precision / Recall / F1 / Hits@1
+│   └── evaluate.py          Precision / Recall / F1 / Enthaltung
 ├── backends/
 │   └── spark.py             Kernmetriken auf PySpark + Äquivalenzprüfung
 ├── reporting/
@@ -119,14 +122,16 @@ class MetricResult:
 
 class BaseMatcher(ABC):
     name: str
-    family: str            # textual | structural | hybrid | holistic
+    family: str            # value | structural | holistic
     requires_seeds: bool
     def match(self, kg_pair: KGPair, seeds: pd.DataFrame | None) -> MatchResult: ...
 ```
 
-Vier der fünf Matcher erben von `SparseScoreMatcher` und müssen nur eine
+Die beiden eigenen Matcher erben von `SparseScoreMatcher` und müssen nur eine
 dünnbesetzte Score-Matrix $|E_1| \times |E_2|$ liefern; Top-k-Pruning,
-Top-1-Auswahl und die Umwandlung in Paare erledigt die Basisklasse.
+Top-1-Auswahl, Schwellenwert und die Umwandlung in Paare erledigt die
+Basisklasse. `pyjedai_ngram` und `paris` binden externe Werkzeuge ein und
+implementieren `match()` direkt.
 
 ## 6. Speicher- und Laufzeitverhalten der Matcher
 
@@ -185,7 +190,7 @@ datasets:
 metrics: [basic_stats, degree_distribution, ...]
 
 matchers:
-  - name: literal_tfidf
+  - name: value_overlap
   - name: paris
     params: {jar_path: tools/paris_0_3.jar, heap: 4g}
 

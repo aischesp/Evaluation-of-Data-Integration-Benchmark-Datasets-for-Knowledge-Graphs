@@ -18,7 +18,7 @@ in den Backup-Teil.
 | 4 | Daten: 6 Benchmarks, kontrolliert variiert | 0:50 | A |
 | 5 | Architektur der Pipeline | 1:00 | A |
 | 6 | Metriken-Katalog (Tabelle) | 0:50 | B |
-| 7 | Fünf Matcher über die Signaltypen | 0:50 | B |
+| 7 | Die Matcher: 2 eigene, 1 Library, PARIS | 0:50 | B |
 | 8 | Befund 1: Profiling deckt Benchmark-Schwächen auf | 1:00 | B |
 | 9 | Befund 2: Dichte-Experiment (Kernfolie) | 1:30 | B |
 | 10 | Befund 3: Familien reagieren auf verschiedene Metriken | 1:00 | B |
@@ -62,7 +62,7 @@ Matching-Aufgabe validiert werden.**
 Drei Schritte:
 
 1. Benchmarks systematisch profilieren (11 Metrik-Gruppen)
-2. Auf denselben Benchmarks fünf Entity-Alignment-Verfahren ausführen
+2. Auf denselben Benchmarks vier Entity-Alignment-Verfahren ausführen
 3. Beides in Beziehung setzen: welche Eigenschaft erklärt welche Güte?
 
 > Sprechhinweis: Schritt 2 kam als Auflage aus Testat 1 dazu und ist im
@@ -122,21 +122,28 @@ herausgreifen:
 
 ---
 
-## Folie 7 — Die fünf Matcher
+## Folie 7 — Die Matcher
 
-**Kernaussage: Die Auswahl deckt die Signaltypen ab, damit die Korrelationen
+**Kernaussage: Zwei eigene Verfahren, eine Standard-Bibliothek, ein
+Referenzsystem — die eigenen isolieren je ein Signal, damit die Korrelationen
 unterscheidbar werden.**
 
-| Matcher | Familie | Signal | Seeds |
-| ------- | ------- | ------ | ----- |
-| `literal_tfidf` | textuell | Literal-Tokens, TF-IDF-Kosinus | nein |
-| `value_overlap` | textuell | ganze Literalwerte | nein |
-| `structural_propagation` | strukturell | Nachbarschaft über Seeds | ja |
-| `hybrid` | hybrid | beides kombiniert | ja |
-| `paris` | holistisch | PARIS v0.3, externes Java-Tool | nein |
+| Matcher | Familie | Signal | Seeds | Schwelle | Herkunft |
+| ------- | ------- | ------ | ----- | -------- | -------- |
+| `value_overlap` | wertbasiert | exakte Literalwerte, IDF | nein | 0,4 | eigen |
+| `pyjedai_ngram` | wertbasiert | Zeichen-3-Gramme, Blocking | nein | 0,2 | pyJedAI |
+| `structural_propagation` | strukturell | gerichtete, typisierte Nachbarschaft | ja | 0,1 | eigen |
+| `paris` | holistisch | Struktur + Literale, iterativ | nein | — | PARIS v0.3 |
+
+Zwei Punkte laut aussprechen:
+
+- **PARIS ist selbst schon hybrid** — ein eigener Hybrid-Matcher wäre kein
+  eigenständiger Ansatz. Deshalb gestrichen, ebenso der TF-IDF-Matcher.
+- **Alle Schwellenwerte sind gemessen**, nicht gesetzt: Sweep 0,0–0,9 auf dem
+  Valid-Split.
 
 Methodik in einem Satz: bewertet auf dem Test-Split (70 %), Seeds nur aus dem
-Train-Split, Parameter auf dem Valid-Split gewählt — nie auf Test.
+Train-Split, Parameter auf dem Valid-Split — nie auf Test.
 
 ---
 
@@ -168,10 +175,8 @@ Figure `results/figures_extended/contrast_density.png`.
 
 | Matcher | V1 (sparse) | V2 (dense) | Δ |
 | ------- | ----------: | ---------: | ---: |
-| `literal_tfidf` | 0,207 | 0,189 | −0,02 |
-| `value_overlap` | 0,475 | 0,451 | −0,02 |
+| `value_overlap` (wertbasiert) | 0,475 | 0,451 | −0,02 |
 | `structural_propagation` | 0,334 | 0,614 | **+0,28** |
-| `hybrid` | 0,386 | 0,550 | +0,16 |
 | `paris` | 0,824 | 0,908 | +0,08 |
 
 Warum das ein sauberes Experiment ist: V1 und V2 enthalten **dieselben
@@ -195,7 +200,7 @@ relativ zum Verfahren.**
 Figure `results/figures_extended/correlation_heatmap.png`, dazu die beiden
 Spitzenlisten (n = 16):
 
-| `structural_propagation` | ρ | | `literal_tfidf` | ρ |
+| `structural_propagation` | ρ | | `value_overlap` (wertbasiert) | ρ |
 | ------------------------ | ---: | --- | --------------- | ---: |
 | ø Total-Grad | +0,70 | | Literal-Jaccard der Gold-Paare | +0,61 |
 | Median-Grad | +0,66 | | Attribut-Tripel/Entität | −0,56 |
@@ -246,9 +251,8 @@ Figure `results/figures/backend_runtime.png`.
 
 - nur OpenEA, nur 4 unabhängige Quellenpaare
 - nur ein Fold, keine Konfidenzintervalle
-- vier von fünf Matchern sind eigene, einfache Implementierungen — die
-  Familien-Kontraste tragen, die absoluten Niveaus liegen unter dem Stand der
-  Technik
+- zwei der vier Verfahren sind Eigenimplementierungen — die Familien-Kontraste
+  tragen, die absoluten Niveaus liegen unter dem Stand der Technik
 - kein Embedding-Verfahren dabei
 
 ---

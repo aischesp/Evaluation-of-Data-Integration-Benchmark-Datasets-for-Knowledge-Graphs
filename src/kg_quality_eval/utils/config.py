@@ -16,6 +16,11 @@ class DatasetConfig:
     path: str
     fold: int = 1
     skip_matchers: list[str] = field(default_factory=list)
+    # Anteil der Gold-Paare, der intakt bleibt. None = Datensatz unveraendert
+    # (strikt bijektiv). Werte < 1 erzeugen Entitaeten ohne Gegenstueck,
+    # siehe preprocessing/nonmatch.py.
+    match_ratio: float | None = None
+    non_match_seed: int = 42
 
 
 @dataclass

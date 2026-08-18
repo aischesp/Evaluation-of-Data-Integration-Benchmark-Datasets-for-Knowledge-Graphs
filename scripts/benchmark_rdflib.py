@@ -27,7 +27,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from kg_quality_eval.loaders import get_loader  # noqa: E402
-from kg_quality_eval.loaders.rdf_export import write_ntriples  # noqa: E402
+from kg_quality_eval.loaders.rdf_export import write_rdf  # noqa: E402
 
 
 def peak_memory_mb() -> float:
@@ -128,7 +128,7 @@ def main() -> None:
     kg = get_loader("openea").load(dataset_dir).kg1
     nt_file = Path("data/processed/rdflib_benchmark") / f"{args.dataset}_kg1.nt"
     start = time.perf_counter()
-    write_ntriples(kg, nt_file, kind="e1")
+    write_rdf(kg, nt_file, kind="e1")
     export_s = time.perf_counter() - start
     size_mb = nt_file.stat().st_size / 1e6
     print(f"        (N-Triples-Export vorab: {export_s:.2f}s, {size_mb:.0f} MB)")

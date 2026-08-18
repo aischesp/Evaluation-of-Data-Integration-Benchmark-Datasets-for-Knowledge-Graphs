@@ -22,10 +22,9 @@
     "alignment_reachability"
   ],
   "matchers": [
-    "literal_tfidf",
     "value_overlap",
+    "pyjedai_ngram",
     "structural_propagation",
-    "hybrid",
     "paris"
   ],
   "eval_split": "test"

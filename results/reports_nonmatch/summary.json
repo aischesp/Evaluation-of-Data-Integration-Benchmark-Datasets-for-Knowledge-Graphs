@@ -1,0 +1,31 @@
+{
+  "project": "kg-quality-eval",
+  "datasets": [
+    "EN_FR_15K_V1_NM",
+    "EN_FR_15K_V2_NM",
+    "EN_DE_15K_V1_NM",
+    "D_W_15K_V1_NM",
+    "D_Y_15K_V1_NM",
+    "EN_FR_100K_V1_NM"
+  ],
+  "metrics": [
+    "basic_stats",
+    "degree_distribution",
+    "property_distribution",
+    "connectivity",
+    "long_tail",
+    "attribute_completeness",
+    "type_distribution",
+    "schema_heterogeneity",
+    "aligned_consistency",
+    "alignment_metrics",
+    "alignment_reachability"
+  ],
+  "matchers": [
+    "value_overlap",
+    "pyjedai_ngram",
+    "structural_propagation",
+    "paris"
+  ],
+  "eval_split": "test"
+}

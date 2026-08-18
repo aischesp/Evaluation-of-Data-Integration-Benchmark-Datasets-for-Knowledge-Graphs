@@ -53,6 +53,15 @@ class SparseScoreMatcher(BaseMatcher):
     top_k: int = 10
     min_score: float = 0.0
 
+    # Woran der Schwellenwert greift:
+    #   "score"  — am Ähnlichkeitswert selbst (sinnvoll bei kalibrierten Massen
+    #              wie Kosinus-Ähnlichkeit)
+    #   "margin" — am relativen Abstand zum zweitbesten Kandidaten
+    #              (top1 - top2) / top1. Nötig, wenn die Scores zeilenweise
+    #              normiert sind: dort ist der Bestwert immer 1,0 und ein
+    #              Schwellenwert auf den Score damit wirkungslos.
+    confidence: str = "score"
+
     @abstractmethod
     def score_matrix(self, kg_pair: KGPair, seeds: pd.DataFrame | None) -> sp.csr_matrix:
         """Sparse |E1| x |E2| candidate scores, already pruned to top_k per row."""
@@ -71,12 +80,24 @@ class SparseScoreMatcher(BaseMatcher):
         )
 
     def _reduce(self, scores: sp.csr_matrix, kg_pair: KGPair) -> pd.DataFrame:
-        """Sparse score matrix -> one predicted partner per KG1 entity."""
+        """Sparse score matrix -> höchstens ein Partner je KG1-Entität.
+
+        Liegt die Konfidenz unter `min_score`, wird *keine* Vorhersage
+        ausgegeben. Genau darüber lässt sich ein Matcher zur Enthaltung
+        bringen, statt immer den besten verfügbaren Kandidaten zu nehmen.
+        """
         e1_uris = kg_pair.kg1.entities["entity_uri"].to_numpy()
         e2_uris = kg_pair.kg2.entities["entity_uri"].to_numpy()
 
         rows, cols, vals = argmax_per_row(scores)
-        keep = vals > self.min_score
+        if self.confidence == "margin":
+            _, _, margins = top1_margin_per_row(scores)
+            with np.errstate(divide="ignore", invalid="ignore"):
+                confidence = np.where(vals > 0, margins / vals, 0.0)
+        else:
+            confidence = vals
+
+        keep = confidence >= self.min_score if self.min_score > 0 else vals > 0
         rows, cols, vals = rows[keep], cols[keep], vals[keep]
 
         return pd.DataFrame({"e1": e1_uris[rows], "e2": e2_uris[cols], "score": vals})
@@ -98,6 +119,42 @@ def argmax_per_row(matrix: sp.csr_matrix) -> tuple[np.ndarray, np.ndarray, np.nd
         vals.append(float(data[best]))
 
     return np.asarray(rows, dtype=int), np.asarray(cols, dtype=int), np.asarray(vals, dtype=float)
+
+
+def top1_margin_per_row(
+    matrix: sp.csr_matrix,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Bester Treffer je Zeile plus Abstand zum Zweitbesten.
+
+    Der Abstand ist das brauchbarere Konfidenzmass als der Score selbst: ein
+    Kandidat, der klar vor dem nächsten liegt, ist verlässlich, auch wenn sein
+    absoluter Score niedrig ist. Umgekehrt ist ein hoher Score wertlos, wenn
+    fünf Kandidaten gleichauf liegen.
+
+    Gibt (Zeilen, Spalten, Abstand) für alle nicht-leeren Zeilen zurück; bei nur
+    einem Kandidaten ist der Abstand der Score selbst.
+    """
+    matrix = matrix.tocsr()
+    rows, cols, margins = [], [], []
+    indptr, indices, data = matrix.indptr, matrix.indices, matrix.data
+
+    for r in range(matrix.shape[0]):
+        lo, hi = indptr[r], indptr[r + 1]
+        if lo == hi:
+            continue
+        row = data[lo:hi]
+        best = int(np.argmax(row))
+        top1 = float(row[best])
+        top2 = float(np.partition(row, -2)[-2]) if row.size > 1 else 0.0
+        rows.append(r)
+        cols.append(int(indices[lo:hi][best]))
+        margins.append(top1 - top2)
+
+    return (
+        np.asarray(rows, dtype=int),
+        np.asarray(cols, dtype=int),
+        np.asarray(margins, dtype=float),
+    )
 
 
 def topk_per_row(matrix: sp.csr_matrix, k: int) -> sp.csr_matrix:

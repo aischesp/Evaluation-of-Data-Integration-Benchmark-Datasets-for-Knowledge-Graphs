@@ -2,13 +2,13 @@
 
 from kg_quality_eval.loaders.base import BaseLoader
 from kg_quality_eval.loaders.openea import OpenEALoader
-from kg_quality_eval.loaders.rdf_export import write_ntriples
+from kg_quality_eval.loaders.rdf_export import parse_ntriples, write_rdf
 
 REGISTRY: dict[str, type[BaseLoader]] = {
     "openea": OpenEALoader,
 }
 
-__all__ = ["REGISTRY", "BaseLoader", "OpenEALoader", "get_loader", "write_ntriples"]
+__all__ = ["REGISTRY", "BaseLoader", "OpenEALoader", "get_loader", "parse_ntriples", "write_rdf"]
 
 
 def get_loader(name: str, **kwargs) -> BaseLoader:

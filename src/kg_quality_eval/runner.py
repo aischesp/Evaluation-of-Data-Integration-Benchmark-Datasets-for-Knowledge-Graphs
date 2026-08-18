@@ -24,6 +24,7 @@ from kg_quality_eval.core import KGPair
 from kg_quality_eval.loaders import get_loader
 from kg_quality_eval.matching import evaluate, evaluation_frame, get_matcher
 from kg_quality_eval.metrics import get_metric
+from kg_quality_eval.preprocessing.nonmatch import inject_non_matches
 from kg_quality_eval.reporting import comparison as cmp_mod
 from kg_quality_eval.reporting import correlation as corr_mod
 from kg_quality_eval.reporting import plots
@@ -70,12 +71,20 @@ class Pipeline:
         loader = get_loader(ds.loader, fold=ds.fold)
         kg_pair = loader.load(Path(ds.path))
         kg_pair.name = ds.name
+
+        if ds.match_ratio is not None:
+            kg_pair = inject_non_matches(kg_pair, ds.match_ratio, seed=ds.non_match_seed)
+            kg_pair.name = ds.name
+            log.info(
+                "   Non-Match-Variante: %d Gold-Paare, %d Entitaeten in KG1 ohne Partner",
+                kg_pair.n_matched(), len(kg_pair.unmatched()),
+            )
         log.info(
             "   geladen in %.1fs: |E1|=%d |E2|=%d |M|=%d",
             time.perf_counter() - start,
             kg_pair.kg1.n_entities(),
             kg_pair.kg2.n_entities(),
-            kg_pair.n_alignments(),
+            kg_pair.n_matched(),
         )
         return kg_pair
 
@@ -125,7 +134,7 @@ class Pipeline:
 
         ds_out = self.out_root / ds.name / "matching"
         ds_out.mkdir(parents=True, exist_ok=True)
-        seeds = kg_pair.split(self.config.seed_split)
+        seeds = kg_pair.matched(self.config.seed_split)
 
         for mc in self.config.matchers:
             if mc.name in ds.skip_matchers:

@@ -6,8 +6,11 @@ scipy>=1.11              # Korrelationen (Spearman/Pearson) in den Metriken
 # Skalierbares Backend für die Kernmetriken (braucht Java 17)
 pyspark>=3.5
 
-# RDF: N-Triples-Export als Input für PARIS
+# RDF: Termkonstruktion und Export/Import über Graph()
 rdflib>=7.0
+
+# Entity Resolution: Blocking, n-Gramm-Matching, Clustering
+pyjedai>=0.3
 
 # Connectivity / Komponenten
 networkx>=3.2

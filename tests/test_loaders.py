@@ -8,7 +8,12 @@ import pytest
 
 from kg_quality_eval.core import KGPair, KnowledgeGraph
 from kg_quality_eval.loaders import OpenEALoader, get_loader
-from kg_quality_eval.loaders.rdf_export import from_uriref, to_uriref, write_ntriples
+from kg_quality_eval.loaders.rdf_export import (
+    from_uriref,
+    parse_ntriples,
+    to_uriref,
+    write_rdf,
+)
 from kg_quality_eval.utils.literals import namespace, normalize_value, parse_literal, tokenize
 
 
@@ -74,21 +79,30 @@ def test_namespace():
     assert namespace("YAGO/E1") == "YAGO/"
 
 
-def test_ntriples_export_roundtrip(kg_pair: KGPair, tmp_path: Path):
-    """Every term must survive the export/parse round-trip unchanged."""
+def test_uriref_roundtrip():
+    """Jeder Term muss die Abbildung in den synthetischen Namespace überleben."""
     for term in ("kg1:a", "YAGO/E473489", "http://dbpedia.org/resource/E1", "isLocatedIn"):
         assert from_uriref(str(to_uriref(term, "e1"))) == term
 
-    target = write_ntriples(kg_pair.kg1, tmp_path / "kg1.nt", kind="e1")
+
+def test_rdf_export_roundtrip(kg_pair: KGPair, tmp_path: Path):
+    """Was rdflib für uns schreibt, muss rdflib auch wieder einlesen können."""
+    target, n_written = write_rdf(kg_pair.kg1, tmp_path / "kg1.nt", kind="e1")
+
+    # 4 Relations- + 5 Attribut-Tripel.
+    assert n_written == 9
+
+    reparsed = parse_ntriples(target)
+    assert len(reparsed) == n_written
+
+    # Und die Subjekte lassen sich auf die Originalkennungen zurückführen.
+    subjects = {from_uriref(str(s)) for s, _, _ in reparsed}
+    assert subjects == {"kg1:a", "kg1:b", "kg1:c"}
+
+
+def test_export_uses_rdflib_serialisation(kg_pair: KGPair, tmp_path: Path):
+    """Die Serialisierung kommt von rdflib, nicht von uns — Format muss stimmen."""
+    target, _ = write_rdf(kg_pair.kg1, tmp_path / "kg1.nt", kind="e1")
     lines = target.read_text(encoding="utf-8").strip().splitlines()
-
-    # 4 relation triples + 5 attribute triples, all well-formed.
-    assert len(lines) == 9
-    assert all(line.endswith(" .") for line in lines)
-
-    # rdflib must be able to parse what we wrote.
-    from rdflib import Graph
-
-    graph = Graph()
-    graph.parse(data=target.read_text(encoding="utf-8"), format="nt")
-    assert len(graph) == 9
+    assert all(line.rstrip().endswith(".") for line in lines)
+    assert all(line.startswith("<") for line in lines)

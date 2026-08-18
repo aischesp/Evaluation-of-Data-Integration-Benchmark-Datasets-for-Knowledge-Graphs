@@ -1,4 +1,4 @@
-# Erweiterte Konfiguration: alle 16 OpenEA-v2.0-Varianten.
+# Erweiterte Konfiguration: alle OpenEA-v2.0-Varianten unter data/raw/openea.
 #
 # Zweck ist ausschliesslich die Korrelationsanalyse. Mit den sechs Kern-
 # datensaetzen aus config/datasets.yaml ist n = 6 zu klein, um Zusammenhaenge
@@ -6,7 +6,8 @@
 # n = 16. Die Kernauswertung und alle Detailtabellen der Ausarbeitung stammen
 # weiterhin aus config/datasets.yaml.
 #
-# Erzeugt von scripts/make_extended_config.py
+# Automatisch erzeugt von scripts/make_extended_config.py — nicht von Hand
+# editieren.
 project: kg-quality-eval
 output_dir: results/reports_extended
 figures_dir: results/figures_extended
@@ -17,66 +18,98 @@ datasets:
   loader: openea
   path: data/raw/openea/D_W_100K_V1
   fold: 1
+  skip_matchers:
+  - pyjedai_ngram
 - name: D_W_100K_V2
   loader: openea
   path: data/raw/openea/D_W_100K_V2
   fold: 1
+  skip_matchers:
+  - pyjedai_ngram
 - name: D_W_15K_V1
   loader: openea
   path: data/raw/openea/D_W_15K_V1
   fold: 1
+  skip_matchers:
+  - pyjedai_ngram
 - name: D_W_15K_V2
   loader: openea
   path: data/raw/openea/D_W_15K_V2
   fold: 1
+  skip_matchers:
+  - pyjedai_ngram
 - name: D_Y_100K_V1
   loader: openea
   path: data/raw/openea/D_Y_100K_V1
   fold: 1
+  skip_matchers:
+  - pyjedai_ngram
 - name: D_Y_100K_V2
   loader: openea
   path: data/raw/openea/D_Y_100K_V2
   fold: 1
+  skip_matchers:
+  - pyjedai_ngram
 - name: D_Y_15K_V1
   loader: openea
   path: data/raw/openea/D_Y_15K_V1
   fold: 1
+  skip_matchers:
+  - pyjedai_ngram
 - name: D_Y_15K_V2
   loader: openea
   path: data/raw/openea/D_Y_15K_V2
   fold: 1
+  skip_matchers:
+  - pyjedai_ngram
 - name: EN_DE_100K_V1
   loader: openea
   path: data/raw/openea/EN_DE_100K_V1
   fold: 1
+  skip_matchers:
+  - pyjedai_ngram
 - name: EN_DE_100K_V2
   loader: openea
   path: data/raw/openea/EN_DE_100K_V2
   fold: 1
+  skip_matchers:
+  - pyjedai_ngram
 - name: EN_DE_15K_V1
   loader: openea
   path: data/raw/openea/EN_DE_15K_V1
   fold: 1
+  skip_matchers:
+  - pyjedai_ngram
 - name: EN_DE_15K_V2
   loader: openea
   path: data/raw/openea/EN_DE_15K_V2
   fold: 1
+  skip_matchers:
+  - pyjedai_ngram
 - name: EN_FR_100K_V1
   loader: openea
   path: data/raw/openea/EN_FR_100K_V1
   fold: 1
+  skip_matchers:
+  - pyjedai_ngram
 - name: EN_FR_100K_V2
   loader: openea
   path: data/raw/openea/EN_FR_100K_V2
   fold: 1
+  skip_matchers:
+  - pyjedai_ngram
 - name: EN_FR_15K_V1
   loader: openea
   path: data/raw/openea/EN_FR_15K_V1
   fold: 1
+  skip_matchers:
+  - pyjedai_ngram
 - name: EN_FR_15K_V2
   loader: openea
   path: data/raw/openea/EN_FR_15K_V2
   fold: 1
+  skip_matchers:
+  - pyjedai_ngram
 metrics:
 - basic_stats
 - degree_distribution
@@ -90,10 +123,9 @@ metrics:
 - alignment_metrics
 - alignment_reachability
 matchers:
-- name: literal_tfidf
 - name: value_overlap
+- name: pyjedai_ngram
 - name: structural_propagation
-- name: hybrid
 - name: paris
   params:
     jar_path: tools/paris_0_3.jar

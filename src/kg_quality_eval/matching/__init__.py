@@ -1,28 +1,33 @@
-"""Entity-alignment matchers.
+"""Entity-Alignment-Matcher.
 
-Five approaches spanning the signal types that a benchmark can (or cannot)
-provide, so that the profiling metrics have something to correlate with:
+Drei eigenständige Verfahren plus PARIS als Referenz. Die Auswahl folgt dem
+Prinzip, dass jedes Verfahren *ein* Signal isoliert nutzt — nur so lässt sich
+messen, welche Datensatz-Eigenschaft auf welche Verfahrensart wirkt:
 
-| Matcher                  | Family     | Signal used            | Seeds |
-| ------------------------ | ---------- | ---------------------- | ----- |
-| `literal_tfidf`          | textual    | literal tokens         | no    |
-| `value_overlap`          | textual    | whole literal values   | no    |
-| `structural_propagation` | structural | relation neighbourhood | yes   |
-| `hybrid`                 | hybrid     | both                   | yes   |
-| `paris`                  | holistic   | both (external tool)   | no    |
+| Matcher                  | Familie    | Signal                          | Seeds | Herkunft   |
+| ------------------------ | ---------- | ------------------------------- | ----- | ---------- |
+| `value_overlap`          | wertbasiert| exakte Literalwerte, IDF-gewichtet | nein | eigen      |
+| `pyjedai_ngram`          | wertbasiert| Zeichen-n-Gramme, Blocking      | nein  | pyJedAI    |
+| `structural_propagation` | strukturell| gerichtete, typisierte Nachbarschaft | ja | eigen      |
+| `paris`                  | holistisch | Struktur + Literale, iterativ   | nein  | PARIS v0.3 |
+
+PARIS ist selbst bereits ein hybrides Verfahren (es gleicht Entitäten,
+Relationen und Klassen gemeinsam ab). Ein zusätzlicher eigener Hybrid-Matcher
+wäre daher kein eigenständiger Ansatz, sondern nur eine Linearkombination der
+beiden anderen — er wurde deshalb entfernt.
 """
 
 from kg_quality_eval.matching.base import BaseMatcher, MatchResult, SparseScoreMatcher
 from kg_quality_eval.matching.evaluate import EvalScores, evaluate, evaluation_frame
-from kg_quality_eval.matching.lexical import LiteralTFIDFMatcher, ValueOverlapMatcher
+from kg_quality_eval.matching.lexical import ValueOverlapMatcher
 from kg_quality_eval.matching.paris import ParisMatcher
-from kg_quality_eval.matching.structural import HybridMatcher, StructuralPropagationMatcher
+from kg_quality_eval.matching.record_linkage import PyJedAIMatcher
+from kg_quality_eval.matching.structural import StructuralPropagationMatcher
 
 REGISTRY: dict[str, type[BaseMatcher]] = {
-    "literal_tfidf": LiteralTFIDFMatcher,
     "value_overlap": ValueOverlapMatcher,
+    "pyjedai_ngram": PyJedAIMatcher,
     "structural_propagation": StructuralPropagationMatcher,
-    "hybrid": HybridMatcher,
     "paris": ParisMatcher,
 }
 
@@ -33,10 +38,9 @@ __all__ = [
     "REGISTRY",
     "BaseMatcher",
     "EvalScores",
-    "HybridMatcher",
-    "LiteralTFIDFMatcher",
     "MatchResult",
     "ParisMatcher",
+    "PyJedAIMatcher",
     "SparseScoreMatcher",
     "StructuralPropagationMatcher",
     "ValueOverlapMatcher",
