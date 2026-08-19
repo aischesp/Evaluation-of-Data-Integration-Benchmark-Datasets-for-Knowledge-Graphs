@@ -1,0 +1,13 @@
+# Zusammenfuehrung doppelter Autoren-Identitaeten.
+#
+# Aische Spieker hat mit zwei Konfigurationen committet: dem Uni-Account
+# (spiekea25 <spiekea25@mi.fu-berlin.de>) und der privaten Adresse. In
+# `git shortlog`, `git log` und `git blame` erschienen dadurch zwei Personen.
+#
+# Format: Kanonischer Name <kanonische Mail> <abzubildende Mail>
+#
+# Hinweis: Diese Datei wirkt nur fuer git-Werkzeuge. Die Contributors-Statistik
+# von GitHub wertet sie nicht aus — dort ordnet man alte Commits zu, indem man
+# die zweite Adresse im GitHub-Konto unter Settings > Emails hinterlegt.
+
+Aische Spieker <aischespieker@web.de> <spiekea25@mi.fu-berlin.de>
