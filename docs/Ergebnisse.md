@@ -338,9 +338,36 @@ und ist damit nicht signifikant. Dominierend ist dort der reine Größeneffekt.
 (ρ = −0,847, p < 0,001); alle übrigen liegen unter 0,43 und sind nicht
 signifikant. Das passt zu seiner durchgängig hohen Precision.
 
-**Einschränkung.** Entropie und Grad sind auf diesen Daten korreliert, und die
-16 Varianten sind keine unabhängigen Stichproben (4 Quellenpaare × 2 Größen ×
-2 Dichten). Die kontrollierten Vergleiche aus §3 sind das stärkere Argument.
+**Diese Zahlen sind deskriptiv, keine Signifikanztests.** Drei Gründe, und wir
+nennen sie, bevor jemand danach fragt:
+
+1. **Multiples Testen.** Über alle Matcher und Metriken sind es 48 Tests. Bei
+   α = 0,05 wären allein zufällig rund zwei "signifikante" Ergebnisse zu
+   erwarten. Bonferroni-korrigiert (α = 0,00104) überlebt **genau einer**:
+   `paris` × Relations-Property-Entropie (p = 3,5·10⁻⁵). Mit der weniger
+   strengen FDR-Korrektur (Benjamini-Hochberg) überleben fünf:
+
+   | Matcher | Metrik | ρ | p | p_fdr |
+   | ------- | ------ | ---: | ---: | ---: |
+   | `paris` | Rel.-Property-Entropie | −0,847 | 0,00004 | 0,002 |
+   | `structural_propagation` | Rel.-Property-Entropie | −0,724 | 0,0015 | 0,037 |
+   | `structural_propagation` | ø Total-Grad | +0,677 | 0,0040 | 0,039 |
+   | `structural_propagation` | Median-Grad | +0,679 | 0,0038 | 0,046 |
+   | `value_overlap` | Gesamtzahl Tripel | −0,697 | 0,0027 | 0,043 |
+
+   Die Ausgabe enthält `p_bonferroni`, `p_fdr` sowie `survives_bonferroni` und
+   `survives_fdr`, damit das nachprüfbar ist.
+2. **Abhängige Stichprobe.** Die 16 Varianten sind 4 Quellenpaare × 2 Größen ×
+   2 Dichtestufen, keine unabhängigen Ziehungen. Die effektive Stichprobe ist
+   kleiner als n = 16.
+3. **Konfundierung.** Entropie und Grad sind auf diesen Daten korreliert; die
+   Korrelationen trennen die beiden Erklärungen nicht.
+
+Was die Aussage trägt, ist deshalb nicht ein einzelner p-Wert, sondern das
+**Vorzeichenmuster über die Familien** — dieselbe Kennzahl positiv für das eine
+Verfahren, negativ für das andere, und das über alle vier Strukturmetriken
+hinweg — zusammen mit dem kontrollierten Experiment aus §3.1, das ohne
+Signifikanztest auskommt.
 
 ### 4.1 Gegenprobe: hängen die Aussagen an unseren eigenen Matchern?
 
@@ -395,17 +422,17 @@ ohne diese Änderung wäre der ganze Umbau wirkungslos geblieben.
 
 | Matcher | F1 bijektiv | F1 mit Non-Matches | Δ | Precision bijektiv | Precision NM | Δ |
 | ------- | ----------: | -----------------: | ---: | -----------------: | -----------: | ---: |
-| `value_overlap` | 0,531 | 0,473 | −0,06 | 0,661 | 0,504 | −0,16 |
-| `pyjedai_ngram` | 0,409 | 0,358 | −0,05 | 0,555 | 0,412 | −0,14 |
-| `structural_propagation` | 0,500 | 0,187 | **−0,31** | 0,710 | 0,251 | **−0,46** |
-| `paris` | 0,835 | 0,697 | −0,14 | 0,967 | 0,808 | −0,16 |
+| `value_overlap` | 0,531 | 0,472 | −0,06 | 0,661 | 0,500 | −0,16 |
+| `pyjedai_ngram` | 0,409 | 0,354 | −0,06 | 0,555 | 0,406 | −0,15 |
+| `structural_propagation` | 0,500 | 0,182 | **−0,32** | 0,710 | 0,245 | **−0,47** |
+| `paris` | 0,835 | 0,698 | −0,14 | 0,966 | 0,806 | −0,16 |
 
 Drei Aussagen daraus:
 
 1. **Auch PARIS verliert deutlich** — 14 F1-Punkte und 16 Precision-Punkte.
    Die auf OpenEA berichteten Werte sind also systematisch optimistisch, nicht
    nur die unserer eigenen Verfahren.
-2. **Das strukturelle Verfahren bricht ein** (−0,31 F1, −0,46 Precision). Es
+2. **Das strukturelle Verfahren bricht ein** (−0,32 F1, −0,47 Precision). Es
    ist doppelt betroffen: die entfernten Entitäten nehmen ihre Kanten mit, der
    Graph wird also zusätzlich dünner, und die Seed-Menge halbiert sich.
 3. **Die Precision fällt bei allen Verfahren um 14–46 Punkte.** Genau diese
@@ -417,8 +444,8 @@ Kennzahlen nachprüfbar — `alignment_coverage` fällt von 1,000 auf 0,667,
 `entity_coverage_kg2` ebenso, und `non_match_share_kg1` liegt bei 0,333.
 
 Über alle sechs Datensätze summierte False Positives auf partnerlosen
-Entitäten: `value_overlap` 17 579, `structural_propagation` 10 279,
-`pyjedai_ngram` 6 591, `paris` 5 725. Die Rangfolge ist eine andere als beim
+Entitäten: `value_overlap` 17 707, `structural_propagation` 9 992,
+`pyjedai_ngram` 6 693, `paris` 5 691. Die Rangfolge ist eine andere als beim
 F1 — PARIS ist hier mit Abstand am zurückhaltendsten, `value_overlap` trotz
 gutem F1 am fehleranfälligsten.
 
@@ -446,7 +473,14 @@ die Gold-Entitäten in derselben Zusammenhangskomponente liegen. Als *blockiert*
 gilt daher je Familie ein anderes fehlendes Signal, bei PARIS nur das Fehlen
 von beiden.
 
-Anteile über die sechs Kern-Datensätze:
+Eine Unterscheidung, die auf den Non-Match-Varianten wichtig wird: eine
+korrekte **Enthaltung** bei einer partnerlosen Entität ist richtig, aber kein
+Treffer. Sie zählt als eigene Klasse `true_negative` und nicht als `correct` —
+sonst wäre der Anteil dort um rund 26 Prozentpunkte überhöht, weil ein Drittel
+der Entitäten keinen Partner hat.
+
+Anteile über die sechs Kern-Datensätze (dort ist `true_negative` per
+Konstruktion null, weil jede Entität einen Partner hat):
 
 | Matcher | korrekt | falscher Kandidat | Enthaltung | vom Benchmark blockiert |
 | ------- | ------: | ----------------: | ---------: | ----------------------: |
@@ -485,10 +519,12 @@ Punkt 3 ist auch die Antwort auf den naheliegenden Einwand, unsere eigenen
 Verfahren seien für eine Analyse zu schwach: der strukturelle Matcher ist nicht
 überwiegend *falsch*, er ist überwiegend *still*.
 
-Auf den Non-Match-Varianten kommt die Klasse `false_on_unmatched` dazu — eine
-Vorhersage für eine Entität, die korrekt keinen Partner hat. Sie macht dort
-6 % (PARIS) bis 17 % (`value_overlap`, `pyjedai_ngram`) aller Test-Entitäten
-aus und ist auf bijektiven Benchmarks prinzipiell nicht messbar.
+Auf den Non-Match-Varianten kommen zwei Klassen dazu: `false_on_unmatched` —
+eine Vorhersage für eine Entität, die korrekt keinen Partner hat — mit 12 %
+(PARIS) bis 17 % (`value_overlap`) aller Test-Entitäten, und `true_negative`,
+die korrekte Enthaltung, mit 16 % bis 27 %. PARIS erreicht dort mit 26,8 % den
+höchsten True-Negative-Anteil: es erkennt am zuverlässigsten, wann es *keinen*
+Partner gibt. Beides ist auf bijektiven Benchmarks prinzipiell nicht messbar.
 
 Ausgabe: `error_taxonomy.csv`, `error_solvability.csv`, `error_examples.csv`
 (klassifizierte Einzelfälle) und `figures/error_taxonomy.png`.

@@ -37,6 +37,15 @@ ist für kein Verfahren auffindbar.
 Der Anteil der so blockierten Fälle ist eine Eigenschaft des *Benchmarks*; der
 Rest (`wrong_candidate`, `abstained`) liegt am Verfahren. Das Verhältnis sagt,
 ob eine Verbesserung am Matcher überhaupt noch etwas bringen kann.
+
+Zwei Eigenheiten, die beim Lesen der Ausgabe wichtig sind:
+
+* Für holistische Verfahren ist `no_shared_literal` konstruktionsbedingt immer
+  null — fehlen beide Signale, wird der Fall unter `structurally_unreachable`
+  geführt. Die Klasse trägt für PARIS also keine Information.
+* `no_shared_literal` prüft die Literal-Überlappung **vollständig**, während
+  die Metrik `literal_value_jaccard` aus dem Katalog auf einer Stichprobe von
+  5 000 Paaren rechnet. Die beiden Grössen sind verwandt, aber nicht identisch.
 """
 
 from __future__ import annotations
@@ -49,6 +58,7 @@ from kg_quality_eval.utils.literals import normalize_value
 # Reihenfolge der Kaskade: die erste zutreffende Regel gewinnt.
 CLASSES = (
     "correct",
+    "true_negative",
     "false_on_unmatched",
     "no_signal",
     "structurally_unreachable",
@@ -88,11 +98,22 @@ def _value_sets(kg, heads: set[str]) -> dict[str, set[str]]:
     return out
 
 
+def largest_components(kg_pair: KGPair) -> tuple[set[str], set[str]]:
+    """Grösste Zusammenhangskomponente beider KGs.
+
+    Separat aufrufbar, damit ein Aufrufer sie einmal je Datensatz berechnen und
+    an alle Matcher weiterreichen kann — sie hängt nicht vom Matcher ab, und
+    auf den 100K-Varianten ist sie der teuerste Teil der Klassifikation.
+    """
+    return _largest_component(kg_pair.kg1), _largest_component(kg_pair.kg2)
+
+
 def classify(
     kg_pair: KGPair,
     predictions: pd.DataFrame,
     split: str = "test",
     family: str = "holistic",
+    components: tuple[set[str], set[str]] | None = None,
 ) -> pd.DataFrame:
     """Ordnet jeder Test-Entität eine Fehlerklasse zu.
 
@@ -115,7 +136,7 @@ def classify(
     deg1 = kg_pair.kg1.degrees.set_index("entity_uri")["total_degree"]
     deg2 = kg_pair.kg2.degrees.set_index("entity_uri")["total_degree"]
     attr1 = kg_pair.kg1.attr_count
-    lcc1, lcc2 = _largest_component(kg_pair.kg1), _largest_component(kg_pair.kg2)
+    lcc1, lcc2 = components if components is not None else largest_components(kg_pair)
 
     left = set(scope["e1"])
     right = {v for v in gold.values() if v}
@@ -165,9 +186,12 @@ def _classify_one(
     if e2_pred and e2_gold and e2_pred == e2_gold:
         return "correct"
 
-    # Entität hat korrekt keinen Partner — jede Vorhersage ist hier falsch.
+    # Entität hat korrekt keinen Partner. Eine Vorhersage ist hier falsch, eine
+    # Enthaltung richtig — aber als True Negative, nicht als Treffer. Beides in
+    # `correct` zu werfen würde den Anteil auf den Non-Match-Varianten stark
+    # überhöhen (dort sind ein Drittel der Entitäten partnerlos).
     if not e2_gold:
-        return "false_on_unmatched" if e2_pred else "correct"
+        return "false_on_unmatched" if e2_pred else "true_negative"
 
     # Ab hier: es gibt ein Gold-Paar, das nicht getroffen wurde.
     if degree == 0 and n_attr == 0:
@@ -219,14 +243,20 @@ def summarize(classified: pd.DataFrame, dataset: str, matcher: str) -> pd.DataFr
 def solvability(summary: pd.DataFrame) -> pd.DataFrame:
     """Trennt benchmark-bedingte von verfahrensbedingten Fehlern.
 
-    `unsolvable_share` ist der Anteil der Fehler, an denen kein Verfahren etwas
-    ändern kann — er ist eine Eigenschaft des Datensatzes und für alle Matcher
-    fast identisch. `method_share` ist der Rest: dort liegt der Spielraum.
+    `unsolvable_share` ist der Anteil der Fehler, an denen das Verfahren nichts
+    ändern kann, weil ihm das benötigte Signal fehlt. Der Wert ist **nicht** für
+    alle Matcher gleich: seit die Kaskade familienabhängig ist, hängt er davon
+    ab, welches Signal die Familie überhaupt nutzt. Auf `D_W_15K_V1` reicht er
+    von 0,11 (strukturell) bis 0,88 (wertbasiert) — genau das ist die Aussage.
+
+    `method_share` ist der Rest: dort liegt der Spielraum für eine bessere
+    Implementierung.
     """
     if summary.empty:
         return pd.DataFrame()
 
-    errors = summary[summary["error_class"] != "correct"]
+    # Weder Treffer noch korrekte Enthaltung sind Fehler.
+    errors = summary[~summary["error_class"].isin(("correct", "true_negative"))]
     grouped = errors.groupby(["dataset", "matcher"])["n"].sum().rename("n_errors")
 
     unsolvable = (
@@ -235,6 +265,8 @@ def solvability(summary: pd.DataFrame) -> pd.DataFrame:
     )
 
     out = pd.concat([grouped, unsolvable], axis=1).fillna(0).reset_index()
-    out["unsolvable_share"] = out["n_unsolvable"] / out["n_errors"].where(out["n_errors"] > 0)
-    out["method_share"] = 1.0 - out["unsolvable_share"]
+    # Ohne Fehler ist der Anteil nicht definiert; 0/0 wuerde NaN liefern.
+    has_errors = out["n_errors"] > 0
+    out["unsolvable_share"] = (out["n_unsolvable"] / out["n_errors"].where(has_errors)).fillna(0.0)
+    out["method_share"] = (1.0 - out["unsolvable_share"]).where(has_errors, 0.0)
     return out.round(4)

@@ -64,20 +64,54 @@ def test_abstention_is_distinguished_from_wrong_candidate(kg_pair: KGPair):
     assert wrong["kg1:d"] == "wrong_candidate"
 
 
+def _with_orphan(kg_pair: KGPair) -> KGPair:
+    rows = kg_pair.alignments.copy()
+    rows.loc[len(rows)] = {"e1": "kg1:c", "e2": "", "split": "test"}
+    return KGPair(name=kg_pair.name, kg1=kg_pair.kg1, kg2=kg_pair.kg2, alignments=rows)
+
+
 def test_false_prediction_on_unmatched_entity(kg_pair: KGPair):
     """Eine Vorhersage für eine partnerlose Entität ist eine eigene Fehlerklasse."""
-    with_orphan = kg_pair.alignments.copy()
-    with_orphan.loc[len(with_orphan)] = {"e1": "kg1:c", "e2": "", "split": "test"}
-    pair = KGPair(
-        name=kg_pair.name, kg1=kg_pair.kg1, kg2=kg_pair.kg2, alignments=with_orphan
-    )
-
+    pair = _with_orphan(kg_pair)
     predicted = _classes(pair, _pred([("kg1:c", "kg2:A")]), "holistic")
     assert predicted["kg1:c"] == "false_on_unmatched"
 
-    # Enthaltung ist hier die richtige Antwort und zählt als korrekt.
-    abstained = _classes(pair, _pred([]), "holistic")
-    assert abstained["kg1:c"] == "correct"
+
+def test_correct_abstention_is_a_true_negative_not_a_hit(kg_pair: KGPair):
+    """Enthaltung bei einer partnerlosen Entität ist richtig — aber kein Treffer.
+
+    Beides in `correct` zu zählen würde den Anteil auf den Non-Match-Varianten
+    stark überhöhen, weil dort ein Drittel der Entitäten partnerlos ist.
+    """
+    pair = _with_orphan(kg_pair)
+    classes = _classes(pair, _pred([("kg1:d", "kg2:D")]), "holistic")
+
+    assert classes["kg1:c"] == "true_negative"
+    assert classes["kg1:d"] == "correct"
+
+    frame = tax.classify(pair, _pred([("kg1:d", "kg2:D")]), family="holistic")
+    n_correct = (frame["error_class"] == "correct").sum()
+    n_true_negative = (frame["error_class"] == "true_negative").sum()
+    assert n_correct == 1, "nur der echte Treffer"
+    assert n_true_negative == 1
+
+
+def test_true_negative_is_not_counted_as_error(kg_pair: KGPair):
+    pair = _with_orphan(kg_pair)
+    frame = tax.classify(pair, _pred([("kg1:d", "kg2:D")]), family="holistic")
+    summary = tax.summarize(frame, "MINI_5", "dummy")
+    solv = tax.solvability(summary)
+
+    n_errors = int(solv.iloc[0]["n_errors"])
+    assert n_errors == len(frame) - 2   # ein Treffer, ein True Negative
+
+
+def test_components_can_be_passed_in(kg_pair: KGPair):
+    """Vorberechnete Komponenten müssen dasselbe Ergebnis liefern."""
+    components = tax.largest_components(kg_pair)
+    without = tax.classify(kg_pair, _pred([]), family="structural")
+    with_cached = tax.classify(kg_pair, _pred([]), family="structural", components=components)
+    pd.testing.assert_frame_equal(without, with_cached)
 
 
 def test_every_entity_gets_exactly_one_class(kg_pair: KGPair):

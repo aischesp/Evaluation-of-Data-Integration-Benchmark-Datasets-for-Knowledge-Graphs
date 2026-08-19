@@ -5,9 +5,24 @@ semantic property of a benchmark actually predicts how well entity alignment
 works on it?".
 
 Caveat that is stated with every result: with a handful of benchmark datasets
-the sample size per matcher is tiny, so these correlations are descriptive
-indicators of a trend, not significance tests. p-values are reported so the
-reader can see exactly how weak the evidence is.
+the sample size per matcher is tiny, so these correlations are **descriptive
+indicators of a trend, not significance tests**.
+
+Zwei Gründe, warum die p-Werte nicht als Signifikanztest gelesen werden dürfen:
+
+1. **Multiples Testen.** Über alle Matcher und Metriken werden Dutzende
+   Korrelationen gerechnet. Bei 48 Tests und α = 0,05 wäre schon zufällig mit
+   rund zwei "signifikanten" Ergebnissen zu rechnen. Die Ausgabe enthält
+   deshalb `p_bonferroni` und `p_fdr` (Benjamini-Hochberg) neben dem rohen
+   Wert — und die Spalte `survives_bonferroni`, die auf unseren Daten für
+   genau einen der 48 Tests wahr ist.
+2. **Abhängige Stichprobe.** Die 16 OpenEA-Varianten sind 4 Quellenpaare × 2
+   Grössen × 2 Dichtestufen, also keine unabhängigen Ziehungen. Die effektive
+   Stichprobe ist kleiner als n = 16.
+
+Das tragende Argument des Projekts sind deshalb die kontrollierten Vergleiche
+(V1 gegen V2 bei identischer Entitätsmenge) und das *Vorzeichenmuster* über die
+Matcher-Familien hinweg — nicht einzelne p-Werte.
 """
 
 from __future__ import annotations
@@ -64,11 +79,37 @@ def correlate(
     if not frames:
         return pd.DataFrame()
 
+    out = pd.DataFrame(frames)
     return (
-        pd.DataFrame(frames)
+        adjust_p_values(out)
         .sort_values(["matcher", "abs_rho"], ascending=[True, False])
         .reset_index(drop=True)
     )
+
+
+def adjust_p_values(frame: pd.DataFrame, alpha: float = 0.05) -> pd.DataFrame:
+    """Ergänzt Bonferroni- und Benjamini-Hochberg-korrigierte p-Werte.
+
+    Die Korrektur läuft über *alle* Tests der Tabelle, also über Matcher und
+    Metriken hinweg — das ist die Familie, aus der die berichteten Ergebnisse
+    ausgewählt werden.
+    """
+    if frame.empty:
+        return frame
+
+    out = frame.copy()
+    n = len(out)
+    out["n_tests"] = n
+    out["p_bonferroni"] = (out["p_value"] * n).clip(upper=1.0)
+    out["survives_bonferroni"] = out["p_value"] < (alpha / n)
+
+    # Benjamini-Hochberg: p-Werte aufsteigend, p * n / Rang, dann monoton machen.
+    order = out["p_value"].rank(method="first").astype(int)
+    scaled = (out["p_value"] * n / order).clip(upper=1.0)
+    ranked = scaled.sort_values(ascending=False)
+    out["p_fdr"] = ranked.cummin().reindex(out.index)
+    out["survives_fdr"] = out["p_fdr"] < alpha
+    return out
 
 
 def top_drivers(correlations: pd.DataFrame, k: int = 8) -> pd.DataFrame:

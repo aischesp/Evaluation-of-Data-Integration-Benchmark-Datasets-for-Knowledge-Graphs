@@ -19,9 +19,15 @@ Fold ab, weil sich ihre Seed-Menge ändert.
     python scripts/run_folds.py --config config/datasets.yaml
 
 Ausgabe:
-    results/reports/fold_scores.csv     eine Zeile je (Fold, Datensatz, Matcher)
-    results/reports/fold_variance.csv   Mittel und Streuung je (Datensatz, Matcher)
-    results/figures/fold_variance.png   F1 mit Fehlerbalken
+    results/reports/fold_scores.csv                eine Zeile je (Fold, Datensatz, Matcher)
+    results/reports/fold_variance.csv              Fold-Streuung je (Datensatz, Matcher)
+    results/reports/f1_spread_across_datasets.csv  Spannweite über Datensätze — das ist
+                                                   *nicht* die Fold-Streuung
+    results/figures/fold_variance.png              F1 mit Fehlerbalken
+
+**Wichtig:** Nur `fold_variance.csv` weist die Streuung aus, die durch die Wahl
+des Folds entsteht. Wer über Datensätze hinweg poolt, misst überwiegend den
+Unterschied zwischen den Datensätzen — auf unseren Daten Faktor 7 bis 30 grösser.
 """
 
 from __future__ import annotations
@@ -42,6 +48,10 @@ import pandas as pd  # noqa: E402
 import seaborn as sns  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
+from kg_quality_eval.utils.console import enable_utf8_output  # noqa: E402
+
+enable_utf8_output()
 
 from kg_quality_eval.loaders import get_loader  # noqa: E402
 from kg_quality_eval.matching import evaluate, get_matcher  # noqa: E402
@@ -86,6 +96,9 @@ def main() -> None:
             kg_pair = get_loader(ds.loader, fold=fold).load(Path(ds.path))
             kg_pair.name = ds.name
             if ds.match_ratio is not None:
+                # inject_non_matches sortiert die Paare vor dem Ziehen, die
+                # entfernten Entitäten sind damit fold-unabhängig. Sonst wuerde
+                # sich hier die Fold-Streuung mit einer zweiten Quelle mischen.
                 kg_pair = inject_non_matches(kg_pair, ds.match_ratio, seed=ds.non_match_seed)
                 kg_pair.name = ds.name
             seeds = kg_pair.matched(cfg.seed_split)
@@ -137,13 +150,27 @@ def main() -> None:
     )
     variance.to_csv(out / "fold_variance.csv", index=False)
 
+    # Achtung: diese Aggregation poolt ueber Datensaetze *und* Folds. Die
+    # Streuung darin ist ueberwiegend der Unterschied zwischen den Datensaetzen,
+    # nicht das Fold-Rauschen (Faktor 7 bis 30 groesser). Der Dateiname sagt das
+    # deshalb explizit; die Fold-Streuung steht in fold_variance.csv.
     per_matcher = (
         scores.groupby("matcher")
-        .agg(f1_mean=("f1", "mean"), f1_std=("f1", "std"))
+        .agg(
+            f1_mean=("f1", "mean"),
+            f1_spread_across_datasets=("f1", "std"),
+            f1_min=("f1", "min"),
+            f1_max=("f1", "max"),
+        )
         .reindex([m for m in MATCHER_ORDER if m in scores["matcher"].unique()])
         .reset_index()
     )
-    per_matcher.to_csv(out / "fold_variance_by_matcher.csv", index=False)
+    # Die eigentliche Fold-Streuung: erst je Datensatz, dann gemittelt.
+    per_matcher = per_matcher.merge(
+        variance.groupby("matcher")["f1_std"].mean().rename("mean_fold_std").reset_index(),
+        on="matcher", how="left",
+    )
+    per_matcher.to_csv(out / "f1_spread_across_datasets.csv", index=False)
 
     _plot(variance, Path(args.figures))
 
@@ -152,7 +179,8 @@ def main() -> None:
     table["f1"] = table.apply(lambda r: f"{r.f1_mean:.3f} ± {r.f1_std:.3f}", axis=1)
     print(table.pivot(index="dataset", columns="matcher", values="f1").to_string())
 
-    print("\n=== Streuung je Matcher (über alle Datensätze und Folds) ===")
+    print("\n=== Je Matcher: Spannweite über Datensätze vs. Fold-Streuung ===")
+    print("(die erste Zahl ist der Unterschied zwischen Datensätzen, nicht das Rauschen)")
     print(per_matcher.round(4).to_string(index=False))
 
     print(f"\n✓ {out / 'fold_variance.csv'}")

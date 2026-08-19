@@ -24,6 +24,10 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+from kg_quality_eval.utils.console import enable_utf8_output  # noqa: E402
+
+enable_utf8_output()
+
 # rdflib meldet jede ungueltige Lexikalform einzeln; wir zaehlen sie stattdessen.
 logging.getLogger("rdflib.term").setLevel(logging.ERROR)
 

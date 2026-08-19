@@ -285,7 +285,8 @@ Klasse zeigt auf eine Metrik dieses Katalogs zurück.
 
 | Klasse | Bedeutung | zugehörige Metrik |
 | ------ | --------- | ----------------- |
-| `correct` | Top-1-Vorhersage ist das Gold-Paar (oder korrekte Enthaltung) | — |
+| `correct` | Top-1-Vorhersage ist das Gold-Paar (True Positive) | — |
+| `true_negative` | korrekte Enthaltung bei einer Entität ohne Partner | `abstain_rate` |
 | `no_signal` | Entität hat weder Relations- noch Attribut-Tripel | `share_no_information` |
 | `structurally_unreachable` | keine Kante bzw. ausserhalb der grössten Komponente | `alignment_reachability` |
 | `no_shared_literal` | Gold-Paar teilt keinen Literalwert | `literal_value_jaccard` |
@@ -304,7 +305,16 @@ Signals, das die jeweilige Familie überhaupt nutzt:
 
 Daraus folgt `unsolvable_share`: der Anteil der Fehler, an denen kein Verfahren
 dieser Familie etwas ändern kann. Der Rest liegt am Verfahren und sagt, ob eine
-Verbesserung überhaupt noch Spielraum hat.
+Verbesserung überhaupt noch Spielraum hat. Der Wert unterscheidet sich stark
+zwischen den Familien — auf `D_W_15K_V1` von 0,11 (strukturell) bis 0,88
+(wertbasiert) — genau das ist die Aussage.
+
+Zwei Eigenheiten beim Lesen der Ausgabe: Für holistische Verfahren ist
+`no_shared_literal` konstruktionsbedingt immer null (fehlen beide Signale, wird
+der Fall unter `structurally_unreachable` geführt). Und `no_shared_literal`
+prüft die Literal-Überlappung vollständig, während `literal_value_jaccard` aus
+§3.6 auf einer 5 000er-Stichprobe rechnet — verwandte, aber nicht identische
+Grössen.
 
 Ausgabe: `error_taxonomy.csv`, `error_solvability.csv`, `error_examples.csv`,
 `figures/error_taxonomy.png` (`scripts/analyze_errors.py`).
@@ -321,7 +331,13 @@ partitionieren dasselbe Referenz-Alignment, Graphen und Struktur bleiben
 identisch. Nur die Matcher hängen vom Fold ab, weil sich ihre Seed-Menge
 ändert.
 
-Ausgabe: `fold_scores.csv`, `fold_variance.csv`, `figures/fold_variance.png`.
+Ausgabe: `fold_scores.csv` (je Fold), `fold_variance.csv` (Fold-Streuung je
+Datensatz und Matcher) und `figures/fold_variance.png`.
+
+> Die Datei `f1_spread_across_datasets.csv` poolt bewusst über Datensätze und
+> ist **nicht** die Fold-Streuung: der Wert dort ist um Faktor 7 bis 30 grösser,
+> weil er den Unterschied zwischen den Datensätzen misst. Für Aussagen über das
+> Rauschen ist `fold_variance.csv` die richtige Datei.
 
 ## 5. Output-Format
 

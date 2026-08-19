@@ -32,10 +32,14 @@ import seaborn as sns  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+from kg_quality_eval.utils.console import enable_utf8_output  # noqa: E402
+
+enable_utf8_output()
+
 sns.set_theme(style="whitegrid", context="talk")
 
 NAME = re.compile(r"^(?P<pair>[A-Z_]+?)_(?P<scale>\d+K)_(?P<density>V\d)$")
-MATCHER_ORDER = ["literal_tfidf", "value_overlap", "structural_propagation", "hybrid", "paris"]
+MATCHER_ORDER = ["value_overlap", "pyjedai_ngram", "structural_propagation", "paris"]
 
 
 def annotate(scores: pd.DataFrame) -> pd.DataFrame:

@@ -49,9 +49,16 @@ def inject_non_matches(
     if not 0.0 < match_ratio <= 1.0:
         raise ValueError(f"match_ratio muss in (0, 1] liegen, war {match_ratio}")
 
-    pairs = kg_pair.matched().drop_duplicates(subset=["e1", "e2"]).reset_index(drop=True)
+    pairs = kg_pair.matched().drop_duplicates(subset=["e1", "e2"])
     if pairs.empty:
         return kg_pair
+
+    # Stabil sortieren, bevor gezogen wird. Die Zeilenreihenfolge des
+    # Alignment-Frames haengt vom gewaehlten Fold ab (train/valid/test werden in
+    # dieser Reihenfolge konkateniert); ohne Sortierung wuerden je Fold andere
+    # Entitaeten entfernt, und eine Fold-Streuung ueber Non-Match-Varianten
+    # mischte zwei Quellen.
+    pairs = pairs.sort_values(["e1", "e2"], kind="stable").reset_index(drop=True)
 
     rng = np.random.default_rng(seed)
     order = rng.permutation(len(pairs))

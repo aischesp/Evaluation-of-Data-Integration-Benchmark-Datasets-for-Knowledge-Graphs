@@ -1,4 +1,4 @@
 matcher,threshold,f1
-pyjedai_ngram,0.2,0.3558380903702581
-structural_propagation,0.1,0.20577052768750237
-value_overlap,0.4,0.4853905030950445
+pyjedai_ngram,0.2,0.3709603743925744
+structural_propagation,0.1,0.18715338432766856
+value_overlap,0.4,0.48856509089003913

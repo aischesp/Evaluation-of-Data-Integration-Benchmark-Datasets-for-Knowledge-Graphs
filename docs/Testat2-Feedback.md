@@ -72,10 +72,10 @@ Ergebnis (Mittel über die sechs Datensätze):
 
 | Matcher | F1 bijektiv | F1 mit Non-Matches | Precision bijektiv | Precision NM |
 | ------- | ----------: | -----------------: | -----------------: | -----------: |
-| `value_overlap` | 0,531 | 0,473 | 0,661 | 0,504 |
-| `pyjedai_ngram` | 0,409 | 0,358 | 0,555 | 0,412 |
-| `structural_propagation` | 0,500 | 0,187 | 0,710 | 0,251 |
-| `paris` | 0,835 | 0,697 | 0,966 | 0,809 |
+| `value_overlap` | 0,531 | 0,472 | 0,661 | 0,500 |
+| `pyjedai_ngram` | 0,409 | 0,354 | 0,555 | 0,406 |
+| `structural_propagation` | 0,500 | 0,182 | 0,710 | 0,245 |
+| `paris` | 0,835 | 0,698 | 0,966 | 0,806 |
 
 Auch PARIS verliert 14 F1- und 16 Precision-Punkte. Die auf OpenEA berichteten
 Werte sind also generell optimistisch, nicht nur unsere.

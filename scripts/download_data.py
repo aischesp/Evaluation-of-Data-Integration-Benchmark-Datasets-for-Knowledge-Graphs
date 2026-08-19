@@ -19,6 +19,12 @@ import urllib.request
 import zipfile
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
+from kg_quality_eval.utils.console import enable_utf8_output  # noqa: E402
+
+enable_utf8_output()
+
 OPENEA_URL = "https://ndownloader.figshare.com/files/34234391"  # figshare, OpenEA v2.0
 OPENEA_ZIP = Path("data/raw/openea/OpenEA_dataset_v2.0.zip")
 OPENEA_ROOT = Path("data/raw/openea")

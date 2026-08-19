@@ -37,6 +37,10 @@ import seaborn as sns  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+from kg_quality_eval.utils.console import enable_utf8_output  # noqa: E402
+
+enable_utf8_output()
+
 from kg_quality_eval.loaders import get_loader  # noqa: E402
 from kg_quality_eval.matching import REGISTRY as MATCHERS  # noqa: E402
 from kg_quality_eval.preprocessing.nonmatch import inject_non_matches  # noqa: E402
@@ -48,11 +52,13 @@ log = logging.getLogger("errors")
 
 # Von "nicht lösbar" nach "lösbar, aber falsch gelöst".
 PLOT_ORDER = [
-    "correct", "wrong_candidate", "abstained", "no_shared_literal",
-    "structurally_unreachable", "no_signal", "false_on_unmatched",
+    "correct", "true_negative", "wrong_candidate", "abstained",
+    "no_shared_literal", "structurally_unreachable", "no_signal",
+    "false_on_unmatched",
 ]
 COLORS = {
     "correct": "#4c9f70",
+    "true_negative": "#a8d5b8",
     "wrong_candidate": "#d1615d",
     "abstained": "#e8a33d",
     "no_shared_literal": "#c47ec4",
@@ -94,6 +100,10 @@ def main() -> None:
             kg_pair = inject_non_matches(kg_pair, ds.match_ratio, seed=ds.non_match_seed)
             kg_pair.name = ds.name
 
+        # Die Zusammenhangskomponenten haengen nicht vom Matcher ab — einmal je
+        # Datensatz berechnen statt viermal.
+        components = tax.largest_components(kg_pair)
+
         for mc in cfg.matchers:
             path = pairs_dir / f"{mc.name}_pairs.csv"
             if not path.exists():
@@ -105,15 +115,24 @@ def main() -> None:
             # fehlenden Literalen.
             family = getattr(MATCHERS.get(mc.name), "family", "holistic")
             classified = tax.classify(
-                kg_pair, predictions, split=cfg.eval_split, family=family
+                kg_pair, predictions, split=cfg.eval_split, family=family,
+                components=components,
             )
             summary = tax.summarize(classified, ds.name, mc.name)
             summaries.append(summary)
 
+            # Nach Grad-Asymmetrie sortiert, damit die Beispiele die
+            # aussagekraeftigsten Faelle zeigen und nicht die erstbesten.
+            errors_only = classified[
+                ~classified["error_class"].isin(("correct", "true_negative"))
+            ].assign(
+                _asymmetry=lambda d: (d["degree_kg1"] - d["degree_kg2"]).abs()
+            )
             sample = (
-                classified[classified["error_class"] != "correct"]
+                errors_only.sort_values("_asymmetry", ascending=False)
                 .groupby("error_class", group_keys=False)
                 .head(args.examples_per_class)
+                .drop(columns="_asymmetry")
                 .assign(dataset=ds.name, matcher=mc.name)
             )
             examples.append(sample)
@@ -139,13 +158,15 @@ def main() -> None:
 
     pd.concat(examples, ignore_index=True).to_csv(out / "error_examples.csv", index=False)
 
-    _plot(taxonomy, Path(args.figures))
-
-    print("\n=== Fehlerklassen je Matcher (Mittel über die Datensätze) ===")
+    # summarize() gibt immer alle Klassen aus, deshalb ist reindex hier
+    # ausreichend und ein Filter auf "vorhandene" Klassen waere wirkungslos.
     pivot = (
         taxonomy.groupby(["matcher", "error_class"])["share"].mean()
-        .unstack().reindex(columns=[c for c in PLOT_ORDER if c in taxonomy["error_class"].values])
+        .unstack().reindex(columns=PLOT_ORDER).fillna(0.0)
     )
+    _plot(pivot, Path(args.figures))
+
+    print("\n=== Fehlerklassen je Matcher (Mittel über die Datensätze) ===")
     print(pivot.round(3).to_string())
 
     print("\n=== Wie viel der Fehler geht auf den Benchmark, wie viel aufs Verfahren? ===")
@@ -155,11 +176,9 @@ def main() -> None:
     print(f"\n✓ {out / 'error_taxonomy.csv'}")
 
 
-def _plot(taxonomy: pd.DataFrame, figures: Path) -> None:
+def _plot(pivot: pd.DataFrame, figures: Path) -> None:
+    """Erwartet den bereits aggregierten Pivot (Matcher x Fehlerklasse)."""
     figures.mkdir(parents=True, exist_ok=True)
-    pivot = (
-        taxonomy.groupby(["matcher", "error_class"])["share"].mean().unstack().fillna(0)
-    )
     classes = [c for c in PLOT_ORDER if c in pivot.columns]
     pivot = pivot[classes]
 

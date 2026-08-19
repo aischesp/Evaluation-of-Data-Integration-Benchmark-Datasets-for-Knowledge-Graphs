@@ -26,6 +26,10 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+from kg_quality_eval.utils.console import enable_utf8_output  # noqa: E402
+
+enable_utf8_output()
+
 from kg_quality_eval.loaders import get_loader  # noqa: E402
 from kg_quality_eval.loaders.rdf_export import write_rdf  # noqa: E402
 

@@ -63,8 +63,8 @@ class ParisMatcher(BaseMatcher):
             shutil.rmtree(run_dir)
         out_dir.mkdir(parents=True, exist_ok=True)
 
-        nt1, n1 = write_rdf(kg_pair.kg1, run_dir / "kg1.nt", kind="e1")
-        nt2, n2 = write_rdf(kg_pair.kg2, run_dir / "kg2.nt", kind="e2")
+        nt1, n_triples1 = write_rdf(kg_pair.kg1, run_dir / "kg1.nt", kind="e1")
+        nt2, n_triples2 = write_rdf(kg_pair.kg2, run_dir / "kg2.nt", kind="e2")
 
         log = self._run_paris(nt1, nt2, out_dir)
         pairs, iteration = self._read_output(out_dir)
@@ -88,7 +88,12 @@ class ParisMatcher(BaseMatcher):
             dataset=kg_pair.name,
             pairs=pairs,
             runtime_s=time.perf_counter() - start,
-            meta={"family": self.family, "iteration": iteration, "log_tail": log[-500:]},
+            meta={
+                "family": self.family,
+                "iteration": iteration,
+                "n_triples_exported": (n_triples1, n_triples2),
+                "log_tail": log[-500:],
+            },
         )
 
     def available(self) -> tuple[bool, str]:

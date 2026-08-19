@@ -1,5 +1,6 @@
 dataset,matcher,error_class,n,share
 EN_FR_15K_V1,value_overlap,correct,5190,0.4942857142857143
+EN_FR_15K_V1,value_overlap,true_negative,0,0.0
 EN_FR_15K_V1,value_overlap,false_on_unmatched,0,0.0
 EN_FR_15K_V1,value_overlap,no_signal,0,0.0
 EN_FR_15K_V1,value_overlap,structurally_unreachable,0,0.0
@@ -7,6 +8,7 @@ EN_FR_15K_V1,value_overlap,no_shared_literal,3754,0.3575238095238095
 EN_FR_15K_V1,value_overlap,abstained,287,0.027333333333333334
 EN_FR_15K_V1,value_overlap,wrong_candidate,1269,0.12085714285714286
 EN_FR_15K_V1,pyjedai_ngram,correct,4054,0.3860952380952381
+EN_FR_15K_V1,pyjedai_ngram,true_negative,0,0.0
 EN_FR_15K_V1,pyjedai_ngram,false_on_unmatched,0,0.0
 EN_FR_15K_V1,pyjedai_ngram,no_signal,0,0.0
 EN_FR_15K_V1,pyjedai_ngram,structurally_unreachable,0,0.0
@@ -14,6 +16,7 @@ EN_FR_15K_V1,pyjedai_ngram,no_shared_literal,3643,0.34695238095238096
 EN_FR_15K_V1,pyjedai_ngram,abstained,963,0.09171428571428572
 EN_FR_15K_V1,pyjedai_ngram,wrong_candidate,1840,0.17523809523809525
 EN_FR_15K_V1,structural_propagation,correct,2946,0.2805714285714286
+EN_FR_15K_V1,structural_propagation,true_negative,0,0.0
 EN_FR_15K_V1,structural_propagation,false_on_unmatched,0,0.0
 EN_FR_15K_V1,structural_propagation,no_signal,0,0.0
 EN_FR_15K_V1,structural_propagation,structurally_unreachable,1311,0.12485714285714286
@@ -21,6 +24,7 @@ EN_FR_15K_V1,structural_propagation,no_shared_literal,0,0.0
 EN_FR_15K_V1,structural_propagation,abstained,4656,0.44342857142857145
 EN_FR_15K_V1,structural_propagation,wrong_candidate,1587,0.15114285714285713
 EN_FR_15K_V1,paris,correct,7279,0.6932380952380952
+EN_FR_15K_V1,paris,true_negative,0,0.0
 EN_FR_15K_V1,paris,false_on_unmatched,0,0.0
 EN_FR_15K_V1,paris,no_signal,0,0.0
 EN_FR_15K_V1,paris,structurally_unreachable,936,0.08914285714285715
@@ -28,6 +32,7 @@ EN_FR_15K_V1,paris,no_shared_literal,0,0.0
 EN_FR_15K_V1,paris,abstained,2070,0.19714285714285715
 EN_FR_15K_V1,paris,wrong_candidate,215,0.020476190476190478
 EN_FR_15K_V2,value_overlap,correct,5706,0.5434285714285715
+EN_FR_15K_V2,value_overlap,true_negative,0,0.0
 EN_FR_15K_V2,value_overlap,false_on_unmatched,0,0.0
 EN_FR_15K_V2,value_overlap,no_signal,0,0.0
 EN_FR_15K_V2,value_overlap,structurally_unreachable,0,0.0
@@ -35,6 +40,7 @@ EN_FR_15K_V2,value_overlap,no_shared_literal,2398,0.22838095238095238
 EN_FR_15K_V2,value_overlap,abstained,447,0.04257142857142857
 EN_FR_15K_V2,value_overlap,wrong_candidate,1949,0.18561904761904763
 EN_FR_15K_V2,pyjedai_ngram,correct,4768,0.4540952380952381
+EN_FR_15K_V2,pyjedai_ngram,true_negative,0,0.0
 EN_FR_15K_V2,pyjedai_ngram,false_on_unmatched,0,0.0
 EN_FR_15K_V2,pyjedai_ngram,no_signal,0,0.0
 EN_FR_15K_V2,pyjedai_ngram,structurally_unreachable,0,0.0
@@ -42,6 +48,7 @@ EN_FR_15K_V2,pyjedai_ngram,no_shared_literal,2326,0.2215238095238095
 EN_FR_15K_V2,pyjedai_ngram,abstained,1094,0.1041904761904762
 EN_FR_15K_V2,pyjedai_ngram,wrong_candidate,2312,0.2201904761904762
 EN_FR_15K_V2,structural_propagation,correct,5639,0.537047619047619
+EN_FR_15K_V2,structural_propagation,true_negative,0,0.0
 EN_FR_15K_V2,structural_propagation,false_on_unmatched,0,0.0
 EN_FR_15K_V2,structural_propagation,no_signal,0,0.0
 EN_FR_15K_V2,structural_propagation,structurally_unreachable,82,0.00780952380952381
@@ -49,6 +56,7 @@ EN_FR_15K_V2,structural_propagation,no_shared_literal,0,0.0
 EN_FR_15K_V2,structural_propagation,abstained,3286,0.3129523809523809
 EN_FR_15K_V2,structural_propagation,wrong_candidate,1493,0.1421904761904762
 EN_FR_15K_V2,paris,correct,8702,0.8287619047619048
+EN_FR_15K_V2,paris,true_negative,0,0.0
 EN_FR_15K_V2,paris,false_on_unmatched,0,0.0
 EN_FR_15K_V2,paris,no_signal,0,0.0
 EN_FR_15K_V2,paris,structurally_unreachable,30,0.002857142857142857
@@ -56,6 +64,7 @@ EN_FR_15K_V2,paris,no_shared_literal,0,0.0
 EN_FR_15K_V2,paris,abstained,1522,0.14495238095238094
 EN_FR_15K_V2,paris,wrong_candidate,246,0.023428571428571427
 EN_DE_15K_V1,value_overlap,correct,5611,0.5343809523809524
+EN_DE_15K_V1,value_overlap,true_negative,0,0.0
 EN_DE_15K_V1,value_overlap,false_on_unmatched,0,0.0
 EN_DE_15K_V1,value_overlap,no_signal,0,0.0
 EN_DE_15K_V1,value_overlap,structurally_unreachable,0,0.0
@@ -63,6 +72,7 @@ EN_DE_15K_V1,value_overlap,no_shared_literal,3388,0.32266666666666666
 EN_DE_15K_V1,value_overlap,abstained,481,0.04580952380952381
 EN_DE_15K_V1,value_overlap,wrong_candidate,1020,0.09714285714285714
 EN_DE_15K_V1,pyjedai_ngram,correct,3150,0.3
+EN_DE_15K_V1,pyjedai_ngram,true_negative,0,0.0
 EN_DE_15K_V1,pyjedai_ngram,false_on_unmatched,0,0.0
 EN_DE_15K_V1,pyjedai_ngram,no_signal,0,0.0
 EN_DE_15K_V1,pyjedai_ngram,structurally_unreachable,0,0.0
@@ -70,6 +80,7 @@ EN_DE_15K_V1,pyjedai_ngram,no_shared_literal,3293,0.31361904761904763
 EN_DE_15K_V1,pyjedai_ngram,abstained,570,0.054285714285714284
 EN_DE_15K_V1,pyjedai_ngram,wrong_candidate,3487,0.3320952380952381
 EN_DE_15K_V1,structural_propagation,correct,5347,0.5092380952380953
+EN_DE_15K_V1,structural_propagation,true_negative,0,0.0
 EN_DE_15K_V1,structural_propagation,false_on_unmatched,0,0.0
 EN_DE_15K_V1,structural_propagation,no_signal,0,0.0
 EN_DE_15K_V1,structural_propagation,structurally_unreachable,476,0.04533333333333334
@@ -77,6 +88,7 @@ EN_DE_15K_V1,structural_propagation,no_shared_literal,0,0.0
 EN_DE_15K_V1,structural_propagation,abstained,3773,0.35933333333333334
 EN_DE_15K_V1,structural_propagation,wrong_candidate,904,0.0860952380952381
 EN_DE_15K_V1,paris,correct,8709,0.8294285714285714
+EN_DE_15K_V1,paris,true_negative,0,0.0
 EN_DE_15K_V1,paris,false_on_unmatched,0,0.0
 EN_DE_15K_V1,paris,no_signal,0,0.0
 EN_DE_15K_V1,paris,structurally_unreachable,143,0.01361904761904762
@@ -84,6 +96,7 @@ EN_DE_15K_V1,paris,no_shared_literal,0,0.0
 EN_DE_15K_V1,paris,abstained,1514,0.1441904761904762
 EN_DE_15K_V1,paris,wrong_candidate,134,0.012761904761904763
 D_W_15K_V1,value_overlap,correct,2939,0.2799047619047619
+D_W_15K_V1,value_overlap,true_negative,0,0.0
 D_W_15K_V1,value_overlap,false_on_unmatched,0,0.0
 D_W_15K_V1,value_overlap,no_signal,0,0.0
 D_W_15K_V1,value_overlap,structurally_unreachable,0,0.0
@@ -91,6 +104,7 @@ D_W_15K_V1,value_overlap,no_shared_literal,6638,0.6321904761904762
 D_W_15K_V1,value_overlap,abstained,235,0.02238095238095238
 D_W_15K_V1,value_overlap,wrong_candidate,688,0.06552380952380953
 D_W_15K_V1,pyjedai_ngram,correct,2413,0.2298095238095238
+D_W_15K_V1,pyjedai_ngram,true_negative,0,0.0
 D_W_15K_V1,pyjedai_ngram,false_on_unmatched,0,0.0
 D_W_15K_V1,pyjedai_ngram,no_signal,0,0.0
 D_W_15K_V1,pyjedai_ngram,structurally_unreachable,0,0.0
@@ -98,6 +112,7 @@ D_W_15K_V1,pyjedai_ngram,no_shared_literal,6482,0.6173333333333333
 D_W_15K_V1,pyjedai_ngram,abstained,702,0.06685714285714285
 D_W_15K_V1,pyjedai_ngram,wrong_candidate,903,0.086
 D_W_15K_V1,structural_propagation,correct,3942,0.37542857142857144
+D_W_15K_V1,structural_propagation,true_negative,0,0.0
 D_W_15K_V1,structural_propagation,false_on_unmatched,0,0.0
 D_W_15K_V1,structural_propagation,no_signal,0,0.0
 D_W_15K_V1,structural_propagation,structurally_unreachable,714,0.068
@@ -105,6 +120,7 @@ D_W_15K_V1,structural_propagation,no_shared_literal,0,0.0
 D_W_15K_V1,structural_propagation,abstained,4517,0.4301904761904762
 D_W_15K_V1,structural_propagation,wrong_candidate,1327,0.12638095238095237
 D_W_15K_V1,paris,correct,6454,0.6146666666666667
+D_W_15K_V1,paris,true_negative,0,0.0
 D_W_15K_V1,paris,false_on_unmatched,0,0.0
 D_W_15K_V1,paris,no_signal,0,0.0
 D_W_15K_V1,paris,structurally_unreachable,617,0.058761904761904765
@@ -112,6 +128,7 @@ D_W_15K_V1,paris,no_shared_literal,0,0.0
 D_W_15K_V1,paris,abstained,3055,0.29095238095238096
 D_W_15K_V1,paris,wrong_candidate,374,0.03561904761904762
 D_Y_15K_V1,value_overlap,correct,4875,0.4642857142857143
+D_Y_15K_V1,value_overlap,true_negative,0,0.0
 D_Y_15K_V1,value_overlap,false_on_unmatched,0,0.0
 D_Y_15K_V1,value_overlap,no_signal,0,0.0
 D_Y_15K_V1,value_overlap,structurally_unreachable,0,0.0
@@ -119,6 +136,7 @@ D_Y_15K_V1,value_overlap,no_shared_literal,4798,0.45695238095238094
 D_Y_15K_V1,value_overlap,abstained,216,0.02057142857142857
 D_Y_15K_V1,value_overlap,wrong_candidate,611,0.05819047619047619
 D_Y_15K_V1,pyjedai_ngram,correct,3193,0.3040952380952381
+D_Y_15K_V1,pyjedai_ngram,true_negative,0,0.0
 D_Y_15K_V1,pyjedai_ngram,false_on_unmatched,0,0.0
 D_Y_15K_V1,pyjedai_ngram,no_signal,0,0.0
 D_Y_15K_V1,pyjedai_ngram,structurally_unreachable,0,0.0
@@ -126,6 +144,7 @@ D_Y_15K_V1,pyjedai_ngram,no_shared_literal,4709,0.4484761904761905
 D_Y_15K_V1,pyjedai_ngram,abstained,1804,0.1718095238095238
 D_Y_15K_V1,pyjedai_ngram,wrong_candidate,794,0.07561904761904761
 D_Y_15K_V1,structural_propagation,correct,4302,0.4097142857142857
+D_Y_15K_V1,structural_propagation,true_negative,0,0.0
 D_Y_15K_V1,structural_propagation,false_on_unmatched,0,0.0
 D_Y_15K_V1,structural_propagation,no_signal,0,0.0
 D_Y_15K_V1,structural_propagation,structurally_unreachable,1523,0.14504761904761904
@@ -133,6 +152,7 @@ D_Y_15K_V1,structural_propagation,no_shared_literal,0,0.0
 D_Y_15K_V1,structural_propagation,abstained,2565,0.24428571428571427
 D_Y_15K_V1,structural_propagation,wrong_candidate,2110,0.20095238095238097
 D_Y_15K_V1,paris,correct,9049,0.8618095238095238
+D_Y_15K_V1,paris,true_negative,0,0.0
 D_Y_15K_V1,paris,false_on_unmatched,0,0.0
 D_Y_15K_V1,paris,no_signal,0,0.0
 D_Y_15K_V1,paris,structurally_unreachable,466,0.04438095238095238
@@ -140,6 +160,7 @@ D_Y_15K_V1,paris,no_shared_literal,0,0.0
 D_Y_15K_V1,paris,abstained,895,0.08523809523809524
 D_Y_15K_V1,paris,wrong_candidate,90,0.008571428571428572
 EN_FR_100K_V1,value_overlap,correct,27859,0.3979857142857143
+EN_FR_100K_V1,value_overlap,true_negative,0,0.0
 EN_FR_100K_V1,value_overlap,false_on_unmatched,0,0.0
 EN_FR_100K_V1,value_overlap,no_signal,0,0.0
 EN_FR_100K_V1,value_overlap,structurally_unreachable,0,0.0
@@ -147,6 +168,7 @@ EN_FR_100K_V1,value_overlap,no_shared_literal,29100,0.4157142857142857
 EN_FR_100K_V1,value_overlap,abstained,1433,0.02047142857142857
 EN_FR_100K_V1,value_overlap,wrong_candidate,11608,0.16582857142857144
 EN_FR_100K_V1,structural_propagation,correct,16415,0.2345
+EN_FR_100K_V1,structural_propagation,true_negative,0,0.0
 EN_FR_100K_V1,structural_propagation,false_on_unmatched,0,0.0
 EN_FR_100K_V1,structural_propagation,no_signal,0,0.0
 EN_FR_100K_V1,structural_propagation,structurally_unreachable,5517,0.07881428571428571
@@ -154,6 +176,7 @@ EN_FR_100K_V1,structural_propagation,no_shared_literal,0,0.0
 EN_FR_100K_V1,structural_propagation,abstained,37850,0.5407142857142857
 EN_FR_100K_V1,structural_propagation,wrong_candidate,10218,0.14597142857142859
 EN_FR_100K_V1,paris,correct,42855,0.6122142857142857
+EN_FR_100K_V1,paris,true_negative,0,0.0
 EN_FR_100K_V1,paris,false_on_unmatched,0,0.0
 EN_FR_100K_V1,paris,no_signal,0,0.0
 EN_FR_100K_V1,paris,structurally_unreachable,4129,0.05898571428571429
