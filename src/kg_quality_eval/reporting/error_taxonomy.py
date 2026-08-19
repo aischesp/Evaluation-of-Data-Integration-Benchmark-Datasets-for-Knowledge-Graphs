@@ -184,8 +184,11 @@ def _classify_one(
         if "literal" in blockers and literal_missing:
             return "no_shared_literal"
     elif structure_missing and literal_missing:
-        # Holistisches Verfahren: nur unlösbar, wenn beide Signale fehlen.
-        return "structurally_unreachable" if structure_missing else "no_shared_literal"
+        # Holistisches Verfahren: erst blockiert, wenn *beide* Signale fehlen.
+        # Der Fall wird unter `structurally_unreachable` geführt; dass auch die
+        # Literale fehlen, steht in der Spalte `shared_literals` der
+        # Einzelfalltabelle.
+        return "structurally_unreachable"
 
     if not e2_pred:
         return "abstained"

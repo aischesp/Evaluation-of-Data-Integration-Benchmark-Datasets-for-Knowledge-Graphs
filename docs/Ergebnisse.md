@@ -18,9 +18,10 @@ mit den Kommandos aus dem README reproduzierbar.
 | F2: Wie unterschiedlich schneiden Matcher darauf ab? | §2 |
 | F3: Welche Eigenschaften erklären diese Unterschiede kausal? | §3 |
 | F4: Reagieren verschiedene Matcher-Familien auf verschiedene Eigenschaften? | §4 |
-| F5: Was ändert sich, wenn der Benchmark realistischer wird? | §5 |
-| F6: Woran genau scheitern die Verfahren im Einzelfall? | §5a |
-| F7: Skaliert die Berechnung über den Hauptspeicher hinaus? | §6 |
+| F5: Sind die Effekte grösser als das Rauschen zwischen den Folds? | §3.4 |
+| F6: Was ändert sich, wenn der Benchmark realistischer wird? | §5 |
+| F7: Woran genau scheitern die Verfahren im Einzelfall? | §5a |
+| F8: Skaliert die Berechnung über den Hauptspeicher hinaus? | §6 |
 
 ---
 
@@ -259,6 +260,45 @@ Datensatz-Eigenschaften.
 
 ---
 
+### 3.4 Streuung über die Folds
+
+Bis hierhin ist jede Zahl ein Punktschätzer aus Fold 1. Ob ein Unterschied von
++0,24 F1 aussagekräftig ist, hängt davon ab, wie stark die Werte allein durch
+die Wahl des Folds schwanken. `scripts/run_folds.py` rechnet deshalb alle
+Matcher auf allen fünf 721-Splits — dasselbe Protokoll, das Sun et al. (2020)
+für dieselben Datensätze verwenden.
+
+F1 als Mittel ± Standardabweichung über fünf Folds:
+
+| Datensatz | `value_overlap` | `pyjedai_ngram` | `structural_prop.` | `paris` |
+| --------- | --------------: | --------------: | -----------------: | ------: |
+| `EN_FR_15K_V1` | 0,559 ± 0,002 | 0,444 ± 0,002 | 0,388 ± 0,004 | 0,810 ± 0,001 |
+| `EN_FR_15K_V2` | 0,580 ± 0,004 | 0,504 ± 0,002 | 0,625 ± 0,012 | 0,889 ± 0,001 |
+| `EN_DE_15K_V1` | 0,613 ± 0,003 | 0,340 ± 0,004 | 0,637 ± 0,004 | 0,898 ± 0,001 |
+| `D_W_15K_V1` | 0,392 ± 0,002 | 0,322 ± 0,003 | 0,490 ± 0,013 | 0,747 ± 0,003 |
+| `D_Y_15K_V1` | 0,593 ± 0,003 | 0,434 ± 0,001 | 0,498 ± 0,007 | 0,922 ± 0,001 |
+
+**Die Streuung ist durchweg klein:** maximal 0,013, im Median 0,003; die
+gesamte Spannweite zwischen bestem und schlechtestem Fold überschreitet nirgends
+0,032. Damit ist der Dichte-Effekt aus §3.1 (+0,235 F1) rund das **19-fache der
+größten** und das **79-fache der medianen** Fold-Streuung. Er liegt also weit
+außerhalb dessen, was durch die Fold-Wahl erklärbar wäre.
+
+Zwei Nebenbeobachtungen:
+
+- Der strukturelle Matcher streut am stärksten (bis 0,013). Das ist plausibel:
+  er ist das einzige Verfahren, dessen Eingabe sich mit dem Fold ändert — die
+  Seed-Menge ist der Train-Split.
+- PARIS streut praktisch nicht (≤ 0,003), obwohl es gar keine Seeds nutzt. Die
+  verbleibende Schwankung stammt aus dem wechselnden Test-Split und aus seiner
+  eigenen Nicht-Determiniertheit (§6.3).
+
+Nicht enthalten sind die 100K-Varianten: fünf Folds hätten dort die Rechenzeit
+vervielfacht, ohne zur Streuungsschätzung etwas beizutragen, was die fünf
+kleineren nicht schon zeigen. Figure: `results/figures/fold_variance.png`.
+
+---
+
 ## 4. Was erklärt die Matching-Güte?
 
 Spearman-Rangkorrelation über alle 16 OpenEA-Varianten.
@@ -413,7 +453,7 @@ Anteile über die sechs Kern-Datensätze:
 | `paris` | 0,740 | **0,022** | 0,193 | 0,045 |
 | `value_overlap` | 0,452 | 0,116 | 0,030 | **0,402** |
 | `structural_propagation` | 0,391 | 0,142 | **0,388** | 0,078 |
-| `pyjedai_ngram` | 0,335 | 0,178 | 0,390 | 0,390 |
+| `pyjedai_ngram` | 0,335 | 0,178 | 0,098 | 0,390 |
 
 Und der daraus abgeleitete Anteil an allen *Fehlern*, der auf den Benchmark
 statt auf das Verfahren zurückgeht:
@@ -480,7 +520,7 @@ Der komplette Kernlauf (6 Datensätze × 11 Metriken × 4 Matcher) dauert rund
 | ------------- | ---------- |
 | Nur OpenEA als Quelle | Aussagen gelten für diese Benchmark-Familie |
 | 16 Varianten, aber nur 4 unabhängige Quellenpaare | effektive Stichprobe der Korrelationen kleiner als n = 16 |
-| Nur ein Fold ausgewertet | Streuung über die fünf 721-Folds nicht quantifiziert |
+| Nur die 15K-Datensätze über fünf Folds | für die 100K-Varianten liegt weiterhin nur Fold 1 vor (Rechenzeit) |
 | Zwei der vier Verfahren sind Eigenimplementierungen | absolute Niveaus unter dem Stand der Technik; die Familien-Kontraste sind davon nicht betroffen |
 | Kein embedding-basiertes Verfahren | die für OpenEA typische Verfahrensklasse fehlt; die Richtungen unserer Befunde werden aber von Sun et al. (2020) für genau diese Klasse bestätigt (§4.1) |
 | `pyjedai_ngram` nicht auf 100K und nicht im erweiterten Lauf | Laufzeit (expliziter Kandidatengraph); deckt 5 der 6 Kern-Datensätze ab |
@@ -488,8 +528,7 @@ Der komplette Kernlauf (6 Datensätze × 11 Metriken × 4 Matcher) dauert rund
 
 ### Naheliegende Fortsetzung
 
-1. Alle fünf Folds rechnen und Konfidenzintervalle angeben.
-2. Ein embedding-basiertes Verfahren einbinden. Die publizierten F1-Werte aus
+1. Ein embedding-basiertes Verfahren einbinden. Die publizierten F1-Werte aus
    Sun et al. (2020) direkt in unsere Korrelation zu übernehmen wäre der
    billigere Weg, aber methodisch angreifbar: ihre Ergebnisse liegen auf der
    v1.1-Fassung der Datensätze, wir rechnen auf v2.0 mit anonymisierten URIs —
@@ -508,7 +547,8 @@ Der komplette Kernlauf (6 Datensätze × 11 Metriken × 4 Matcher) dauert rund
 ## 8. Zusammenfassung
 
 1. Verdopplung der Graphdichte bei identischer Entitätsmenge verbessert
-   strukturelles Matching um 0,24 F1 und wertbasiertes um null.
+   strukturelles Matching um 0,24 F1 und wertbasiertes um null — das ist rund
+   das 19-fache der grössten über fünf Folds gemessenen Streuung.
 2. Wert- und strukturbasierte Verfahren hängen an unterschiedlichen
    Eigenschaften: der mittlere Grad erklärt das strukturelle Verfahren
    (ρ = +0,68) und das wertbasierte nicht (ρ = −0,30, nicht signifikant).
@@ -519,5 +559,9 @@ Der komplette Kernlauf (6 Datensätze × 11 Metriken × 4 Matcher) dauert rund
    Fehlerart prinzipiell nicht messen.
 5. OpenEA v2.0 enthält praktisch keine Typ-Information, und die Dateien sind
    trotz des Namens kein RDF-Serialisierungsformat.
-6. Die Kernmetriken liefern auf Pandas und PySpark bitgleiche Ergebnisse
-   (174/174).
+6. Die Fehler-Taxonomie trennt benchmark- von verfahrensbedingten Fehlern: die
+   wertbasierten Verfahren sind mit 72 % unlösbarer Fehler nahe an ihrer Decke,
+   das strukturelle Verfahren mit 12 % weit davon entfernt — sein niedriges F1
+   kommt aus Enthaltung, nicht aus Fehlern.
+7. Die Kernmetriken liefern auf Pandas und PySpark bitgleiche Ergebnisse
+   (174/174), und die Fold-Streuung liegt bei maximal 0,013 F1.

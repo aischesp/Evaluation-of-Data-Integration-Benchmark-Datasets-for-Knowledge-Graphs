@@ -241,11 +241,12 @@ bei Faktor 0,97–1,21). Gemittelt über 8 Datensatzpaare:
 
 | Matcher | V1 sparse | V2 dense | Δ |
 | ------- | --------: | -------: | ---: |
-| `literal_tfidf` | 0,207 | 0,189 | −0,02 |
-| `value_overlap` | 0,475 | 0,451 | −0,02 |
-| `structural_propagation` | 0,334 | 0,614 | **+0,28** |
-| `hybrid` | 0,386 | 0,550 | +0,16 |
-| `paris` | 0,824 | 0,908 | +0,08 |
+| `value_overlap` | 0,470 | 0,445 | −0,03 |
+| `structural_propagation` | 0,498 | 0,733 | **+0,24** |
+| `paris` | 0,825 | 0,908 | +0,08 |
+
+> Die Werte sind nach der Überarbeitung zu Testat 2 neu gerechnet; `literal_tfidf`
+> und `hybrid` sind seitdem entfernt (siehe `docs/Testat2-Feedback.md`).
 
 Das ist keine Korrelation, sondern ein Experiment mit genau einer veränderten
 Variable.
