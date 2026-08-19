@@ -276,6 +276,53 @@ Hyperparameter-Frage und wird in `scripts/analyze_seed_size.py` gemessen
 (5 %, 10 %, 25 %, 50 %, 75 %, 100 % des Train-Splits). Ergebnis in
 `docs/Ergebnisse.md`.
 
+### 4.7 Fehler-Taxonomie
+
+Die Metriken oben beschreiben Datensätze, die Bewertung beschreibt Verfahren.
+Die Taxonomie (`reporting/error_taxonomy.py`) verbindet beides auf
+Einzelfallebene: sie ordnet jede Test-Entität einer Fehlerursache zu, und jede
+Klasse zeigt auf eine Metrik dieses Katalogs zurück.
+
+| Klasse | Bedeutung | zugehörige Metrik |
+| ------ | --------- | ----------------- |
+| `correct` | Top-1-Vorhersage ist das Gold-Paar (oder korrekte Enthaltung) | — |
+| `no_signal` | Entität hat weder Relations- noch Attribut-Tripel | `share_no_information` |
+| `structurally_unreachable` | keine Kante bzw. ausserhalb der grössten Komponente | `alignment_reachability` |
+| `no_shared_literal` | Gold-Paar teilt keinen Literalwert | `literal_value_jaccard` |
+| `abstained` | Enthaltung, obwohl es ein Gold-Paar gibt | `abstain_rate` |
+| `false_on_unmatched` | Vorhersage für eine korrekt partnerlose Entität | `n_false_on_unmatched` |
+| `wrong_candidate` | falscher Partner gewählt, obwohl Signal vorhanden war | Rest |
+
+**Die Kaskade ist familienabhängig.** Als *blockiert* gilt nur das Fehlen des
+Signals, das die jeweilige Familie überhaupt nutzt:
+
+| Familie | Blocker |
+| ------- | ------- |
+| `structural` | fehlende Struktur |
+| `value` | kein gemeinsamer Literalwert |
+| `holistic` (PARIS) | beides zugleich |
+
+Daraus folgt `unsolvable_share`: der Anteil der Fehler, an denen kein Verfahren
+dieser Familie etwas ändern kann. Der Rest liegt am Verfahren und sagt, ob eine
+Verbesserung überhaupt noch Spielraum hat.
+
+Ausgabe: `error_taxonomy.csv`, `error_solvability.csv`, `error_examples.csv`,
+`figures/error_taxonomy.png` (`scripts/analyze_errors.py`).
+
+### 4.8 Streuung über die Folds
+
+OpenEA liefert fünf disjunkte 721-Splits je Datensatz. `scripts/run_folds.py`
+rechnet alle Matcher auf allen fünf und aggregiert zu Mittel und
+Standardabweichung — dasselbe Protokoll, das Sun et al. (2020) für dieselben
+Datensätze verwenden.
+
+Die Profiling-Metriken werden dabei nicht neu gerechnet: die Folds
+partitionieren dasselbe Referenz-Alignment, Graphen und Struktur bleiben
+identisch. Nur die Matcher hängen vom Fold ab, weil sich ihre Seed-Menge
+ändert.
+
+Ausgabe: `fold_scores.csv`, `fold_variance.csv`, `figures/fold_variance.png`.
+
 ## 5. Output-Format
 
 Pro Datensatz unter `results/reports/<dataset>/`:

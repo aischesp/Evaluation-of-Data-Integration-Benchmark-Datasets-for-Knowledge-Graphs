@@ -37,7 +37,9 @@ Dieses Projekt baut ein Framework, das
 
 1. Benchmark-Datensätze systematisch **profiliert** (Metriken-Katalog, 11 Metrik-Gruppen),
 2. auf denselben Datensätzen vier **Entity-Alignment-Matcher** ausführt und bewertet,
-3. beides **korreliert** und in kontrollierten Vergleichen prüft.
+3. beides **korreliert** und in kontrollierten Vergleichen prüft,
+4. jeden einzelnen Fehler einer **Ursache zuordnet** und dabei trennt, was der
+   Benchmark verursacht und was das Verfahren.
 
 Schritt 3 ist der eigentliche Beitrag — Profiling allein sagt noch nicht, ob
 ein Benchmark für seine Aufgabe taugt.
@@ -84,6 +86,13 @@ Variante mit partnerlosen Entitäten, Schwellenwert-Bestimmung, Seed-Analyse:
 python -m kg_quality_eval.runner --config config/datasets_nonmatch.yaml
 python scripts/tune_thresholds.py --config config/datasets_nonmatch.yaml
 python scripts/analyze_seed_size.py --config config/datasets.yaml
+```
+
+Fehler-Taxonomie (setzt einen Pipeline-Lauf voraus) und Fünf-Fold-Streuung:
+
+```bash
+python scripts/analyze_errors.py --config config/datasets.yaml
+python scripts/run_folds.py --config config/datasets.yaml
 ```
 
 Pandas gegen PySpark verifizieren und die Laufzeiten vergleichen:

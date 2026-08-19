@@ -19,7 +19,8 @@ mit den Kommandos aus dem README reproduzierbar.
 | F3: Welche Eigenschaften erklären diese Unterschiede kausal? | §3 |
 | F4: Reagieren verschiedene Matcher-Familien auf verschiedene Eigenschaften? | §4 |
 | F5: Was ändert sich, wenn der Benchmark realistischer wird? | §5 |
-| F6: Skaliert die Berechnung über den Hauptspeicher hinaus? | §7 |
+| F6: Woran genau scheitern die Verfahren im Einzelfall? | §5a |
+| F7: Skaliert die Berechnung über den Hauptspeicher hinaus? | §6 |
 
 ---
 
@@ -301,6 +302,47 @@ signifikant. Das passt zu seiner durchgängig hohen Precision.
 16 Varianten sind keine unabhängigen Stichproben (4 Quellenpaare × 2 Größen ×
 2 Dichten). Die kontrollierten Vergleiche aus §3 sind das stärkere Argument.
 
+### 4.1 Gegenprobe: hängen die Aussagen an unseren eigenen Matchern?
+
+Zwei der vier Verfahren sind Eigenimplementierungen und erreichen auf den
+Non-Match-Varianten F1-Werte unter 0,5. Die naheliegende Frage ist, ob die
+Familien-Kontraste aus §4 überhaupt tragen oder nur das schwache Niveau dieser
+Verfahren widerspiegeln. Zwei unabhängige Gegenproben sagen: sie tragen.
+
+**Erstens, intern über PARIS.** PARIS ist ein etabliertes, unstrittig starkes
+Verfahren (F1 0,835). Wenn die Richtungen aus §4 echt sind, muss es sie
+mitzeigen:
+
+| Metrik | strukturell | **PARIS** | wertbasiert |
+| ------ | ----------: | --------: | ----------: |
+| ø Total-Grad | +0,68 | **+0,42** | −0,30 |
+| Relations-Property-Entropie | −0,72 | **−0,85** | −0,11 |
+| Anteil Entitäten in größter Komponente | +0,61 | **+0,26** | −0,32 |
+| Gold-Paare in größter Komponente | +0,62 | **+0,28** | −0,34 |
+
+PARIS hat bei allen vier Strukturmetriken dasselbe Vorzeichen wie unser
+strukturelles Verfahren; das wertbasierte hat bei drei von vier das
+umgekehrte. Der Kontrast hängt also nicht am absoluten Niveau der eigenen
+Implementierungen.
+
+**Zweitens, extern über die Literatur.** Sun et al. (2020) evaluieren zwölf
+embedding-basierte Verfahren auf denselben Datensätzen und mit demselben
+Protokoll (fünf Folds, 20 % Seeds / 10 % Validierung / 70 % Test). Ihre
+Befunde decken sich mit unseren:
+
+| Ihre Aussage | unser Befund |
+| ------------ | ------------ |
+| „most relation-based approaches perform better on the dense datasets than on the sparse ones" | Dichte-Effekt: strukturell +0,24, wertbasiert −0,03 (§3.1) |
+| „all the relation-based approaches run better in aligning entities with rich relation triples while their results decline on long-tail entities" | ø Grad korreliert strukturell mit +0,68, wertbasiert mit −0,30 (§4) |
+| „all the approaches perform better on the 15K datasets than on the 100K datasets" | Skalen-Effekt, alle Verfahren verlieren (§3.2) |
+
+Das ist keine Bestätigung unserer Zahlen — die Verfahrensklasse ist eine andere
+und ihre Ergebnisse liegen auf der v1.1-Fassung der Datensätze, während wir auf
+v2.0 mit anonymisierten URIs rechnen. Es ist eine Bestätigung der *Richtungen*,
+und zwar aus einer Verfahrensfamilie, die wir selbst nicht abdecken.
+
+---
+
 ## 5. Was passiert ohne Bijektivität?
 
 Der zentrale neue Befund. `preprocessing/nonmatch.py` entfernt gezielt
@@ -351,6 +393,68 @@ Absolute Zahl der False Positives auf partnerlosen Entitäten (Test-Split):
 
 ---
 
+## 5a. Fehler-Taxonomie: woran genau scheitern die Verfahren?
+
+Die Korrelationsanalyse sagt, *dass* eine Eigenschaft zusammenhängt, nicht
+*wodurch*. `reporting/error_taxonomy.py` klassifiziert deshalb jede einzelne
+Test-Entität nach der Ursache ihres Fehlers.
+
+**Die Zuordnung ist familienabhängig.** Ein rein struktureller Matcher liest
+keine Literale — ihm „fehlende Literal-Überlappung" als Ursache zuzuschreiben
+wäre sinnlos; umgekehrt ist ein wertbasierter Matcher nicht davon betroffen, ob
+die Gold-Entitäten in derselben Zusammenhangskomponente liegen. Als *blockiert*
+gilt daher je Familie ein anderes fehlendes Signal, bei PARIS nur das Fehlen
+von beiden.
+
+Anteile über die sechs Kern-Datensätze:
+
+| Matcher | korrekt | falscher Kandidat | Enthaltung | vom Benchmark blockiert |
+| ------- | ------: | ----------------: | ---------: | ----------------------: |
+| `paris` | 0,740 | **0,022** | 0,193 | 0,045 |
+| `value_overlap` | 0,452 | 0,116 | 0,030 | **0,402** |
+| `structural_propagation` | 0,391 | 0,142 | **0,388** | 0,078 |
+| `pyjedai_ngram` | 0,335 | 0,178 | 0,390 | 0,390 |
+
+Und der daraus abgeleitete Anteil an allen *Fehlern*, der auf den Benchmark
+statt auf das Verfahren zurückgeht:
+
+| Matcher | Fehler durch den Benchmark | Fehler durch das Verfahren |
+| ------- | -------------------------: | -------------------------: |
+| `value_overlap` | **0,720** | 0,280 |
+| `pyjedai_ngram` | 0,573 | 0,427 |
+| `paris` | 0,169 | 0,831 |
+| `structural_propagation` | 0,123 | **0,877** |
+
+Drei Aussagen, die aus dem F1 allein nicht ablesbar sind:
+
+1. **PARIS wählt fast nie einen falschen Kandidaten** (2,2 %). Wenn es eine
+   Vorhersage abgibt, stimmt sie fast immer; seine Fehler sind Enthaltungen.
+   Das erklärt die durchgängige Precision von 0,97 besser als jede
+   Korrelation.
+2. **Die wertbasierten Verfahren sind nahe an ihrer Decke.** 72 % bzw. 57 %
+   ihrer Fehler betreffen Gold-Paare, die *keinen einzigen* Literalwert teilen.
+   Dort kann kein wertbasiertes Verfahren etwas ausrichten — eine Verbesserung
+   der Implementierung würde am Ergebnis wenig ändern.
+3. **Beim strukturellen Verfahren ist es umgekehrt.** Nur 12 % seiner Fehler
+   sind benchmark-bedingt; die dominierende Klasse ist mit 39 % die
+   **Enthaltung**. Sein niedriges F1 kommt also nicht daher, dass es falsch
+   liegt, sondern daher, dass es zu vorsichtig ist. Das ist eine direkte Folge
+   des Margin-Schwellenwerts und wäre der nächste Ansatzpunkt.
+
+Punkt 3 ist auch die Antwort auf den naheliegenden Einwand, unsere eigenen
+Verfahren seien für eine Analyse zu schwach: der strukturelle Matcher ist nicht
+überwiegend *falsch*, er ist überwiegend *still*.
+
+Auf den Non-Match-Varianten kommt die Klasse `false_on_unmatched` dazu — eine
+Vorhersage für eine Entität, die korrekt keinen Partner hat. Sie macht dort
+6 % (PARIS) bis 17 % (`value_overlap`, `pyjedai_ngram`) aller Test-Entitäten
+aus und ist auf bijektiven Benchmarks prinzipiell nicht messbar.
+
+Ausgabe: `error_taxonomy.csv`, `error_solvability.csv`, `error_examples.csv`
+(klassifizierte Einzelfälle) und `figures/error_taxonomy.png`.
+
+---
+
 ## 6. Skalierbarkeit
 
 Pandas und PySpark rechnen die Kernmetriken unabhängig voneinander; ein
@@ -378,17 +482,26 @@ Der komplette Kernlauf (6 Datensätze × 11 Metriken × 4 Matcher) dauert rund
 | 16 Varianten, aber nur 4 unabhängige Quellenpaare | effektive Stichprobe der Korrelationen kleiner als n = 16 |
 | Nur ein Fold ausgewertet | Streuung über die fünf 721-Folds nicht quantifiziert |
 | Zwei der vier Verfahren sind Eigenimplementierungen | absolute Niveaus unter dem Stand der Technik; die Familien-Kontraste sind davon nicht betroffen |
-| Kein embedding-basiertes Verfahren | die für OpenEA typische Verfahrensklasse fehlt |
+| Kein embedding-basiertes Verfahren | die für OpenEA typische Verfahrensklasse fehlt; die Richtungen unserer Befunde werden aber von Sun et al. (2020) für genau diese Klasse bestätigt (§4.1) |
 | `pyjedai_ngram` nicht auf 100K und nicht im erweiterten Lauf | Laufzeit (expliziter Kandidatengraph); deckt 5 der 6 Kern-Datensätze ab |
 | Non-Match-Varianten mit einer festen Quote (33 %) | der Verlauf über verschiedene Quoten ist nicht vermessen |
 
 ### Naheliegende Fortsetzung
 
 1. Alle fünf Folds rechnen und Konfidenzintervalle angeben.
-2. Ein embedding-basiertes Verfahren einbinden oder die publizierten F1-Werte
-   aus Sun et al. (2020) als Literaturwerte in die Korrelation aufnehmen.
+2. Ein embedding-basiertes Verfahren einbinden. Die publizierten F1-Werte aus
+   Sun et al. (2020) direkt in unsere Korrelation zu übernehmen wäre der
+   billigere Weg, aber methodisch angreifbar: ihre Ergebnisse liegen auf der
+   v1.1-Fassung der Datensätze, wir rechnen auf v2.0 mit anonymisierten URIs —
+   und genau dieser Unterschied betrifft attributnutzende Verfahren. Wir nutzen
+   die Arbeit deshalb als qualitative Bestätigung der Richtungen (§4.1), nicht
+   als Datenpunkte.
 3. Die Non-Match-Quote variieren (10 %, 33 %, 50 %, 75 %) statt nur einen Punkt
    zu messen.
+4. Den Schwellenwert des strukturellen Verfahrens senken: die Fehler-Taxonomie
+   (§5a) zeigt, dass dort 39 % der Test-Entitäten auf Enthaltung entfallen und
+   nur 12 % der Fehler benchmark-bedingt sind — der Spielraum liegt also im
+   Verfahren, nicht in den Daten.
 
 ---
 
