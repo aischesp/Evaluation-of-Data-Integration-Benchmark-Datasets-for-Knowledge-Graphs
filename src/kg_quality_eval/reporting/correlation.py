@@ -103,11 +103,24 @@ def adjust_p_values(frame: pd.DataFrame, alpha: float = 0.05) -> pd.DataFrame:
     out["p_bonferroni"] = (out["p_value"] * n).clip(upper=1.0)
     out["survives_bonferroni"] = out["p_value"] < (alpha / n)
 
-    # Benjamini-Hochberg: p-Werte aufsteigend, p * n / Rang, dann monoton machen.
+    # Benjamini-Hochberg, Step-up: p-Werte aufsteigend ranken, auf p * n / Rang
+    # skalieren und dann vom groessten p-Wert her das laufende Minimum bilden.
+    # Der adjustierte Wert eines Tests ist das Minimum ueber alle Tests mit
+    # gleichem oder groesserem p — nur so ist p_fdr monoton in p.
+    #
+    # Durchlaufen wird dabei nach absteigendem *Rang*, nicht nach absteigendem
+    # `scaled` und auch nicht nach absteigendem p-Wert:
+    #   - `scaled` ist nicht monoton im Rang (p = 0,10 / 0,11 / 0,12 ergibt
+    #     0,30 / 0,165 / 0,12); ein cummin ueber absteigend sortierte `scaled`
+    #     gibt die Reihe unveraendert zurueck, der Step-up faende nicht statt.
+    #   - nach p-Wert zu sortieren bricht bei Gleichstaenden: zwei identische
+    #     p-Werte haben verschiedene Raenge und damit verschiedene `scaled`,
+    #     wuerden aber in Ausgangsreihenfolge besucht und bekaemen dadurch
+    #     verschiedene adjustierte Werte. Gleiche p muessen gleiches p_fdr haben.
     order = out["p_value"].rank(method="first").astype(int)
     scaled = (out["p_value"] * n / order).clip(upper=1.0)
-    ranked = scaled.sort_values(ascending=False)
-    out["p_fdr"] = ranked.cummin().reindex(out.index)
+    by_rank_descending = order.sort_values(ascending=False).index
+    out["p_fdr"] = scaled.loc[by_rank_descending].cummin().reindex(out.index)
     out["survives_fdr"] = out["p_fdr"] < alpha
     return out
 

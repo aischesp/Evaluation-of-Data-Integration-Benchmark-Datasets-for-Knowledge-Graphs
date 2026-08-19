@@ -53,6 +53,49 @@ def test_fdr_is_monotone_in_the_p_value_order():
     assert out["p_fdr"].is_monotonic_increasing
 
 
+def test_fdr_step_up_actually_runs():
+    """Der Step-up muss greifen, wenn p * n / Rang fallend ist.
+
+    Bei p = 0,10 / 0,11 / 0,12 (n = 3) ergibt die reine Skalierung
+    0,30 / 0,165 / 0,12 — also *fallend*. Ohne das laufende Minimum ueber die
+    groesseren p-Werte bliebe genau das stehen, und p_fdr waere fuer den
+    kleinsten p-Wert am groessten. Korrekt ist 0,12 fuer alle drei.
+
+    Dieser Fall unterscheidet die Step-up-Variante von der reinen Skalierung;
+    monoton steigende Testdaten tun das nicht.
+    """
+    out = adjust_p_values(_frame([0.10, 0.11, 0.12])).sort_values("p_value")
+
+    assert list(out["p_fdr"].round(6)) == [0.12, 0.12, 0.12]
+    assert out["p_fdr"].is_monotonic_increasing
+
+
+def test_tied_p_values_get_the_same_adjusted_value():
+    """Gleiche p-Werte muessen dasselbe p_fdr bekommen.
+
+    Gleichstaende bekommen verschiedene Raenge und damit verschiedene
+    p * n / Rang. Der Step-up muss den kleineren Wert auf beide ziehen — sonst
+    haengt das Ergebnis davon ab, in welcher Reihenfolge die Zeilen zufaellig
+    in der Tabelle stehen.
+    """
+    out = adjust_p_values(_frame([0.02, 0.40, 0.40, 0.90]))
+    tied = out[out["p_value"] == 0.40]["p_fdr"]
+
+    assert tied.nunique() == 1
+    assert out.sort_values("p_value")["p_fdr"].is_monotonic_increasing
+
+
+def test_fdr_never_exceeds_the_plain_scaling():
+    """Der adjustierte Wert ist ein Minimum — er darf p * n / Rang nie ueberschreiten."""
+    p_values = [0.002, 0.09, 0.10, 0.11, 0.12, 0.4]
+    out = adjust_p_values(_frame(p_values)).sort_values("p_value").reset_index(drop=True)
+
+    n = len(p_values)
+    scaled = [min(p * n / (i + 1), 1.0) for i, p in enumerate(sorted(p_values))]
+    assert (out["p_fdr"] <= pd.Series(scaled) + 1e-12).all()
+    assert out["p_fdr"].is_monotonic_increasing
+
+
 def test_empty_frame_survives():
     assert adjust_p_values(pd.DataFrame()).empty
 

@@ -349,11 +349,11 @@ nennen sie, bevor jemand danach fragt:
 
    | Matcher | Metrik | ρ | p | p_fdr |
    | ------- | ------ | ---: | ---: | ---: |
-   | `paris` | Rel.-Property-Entropie | −0,847 | 0,00004 | 0,002 |
+   | `paris` | Rel.-Property-Entropie | −0,847 | 0,00003 | 0,002 |
    | `structural_propagation` | Rel.-Property-Entropie | −0,724 | 0,0015 | 0,037 |
-   | `structural_propagation` | ø Total-Grad | +0,677 | 0,0040 | 0,039 |
-   | `structural_propagation` | Median-Grad | +0,679 | 0,0038 | 0,046 |
-   | `value_overlap` | Gesamtzahl Tripel | −0,697 | 0,0027 | 0,043 |
+   | `value_overlap` | Gesamtzahl Tripel | −0,697 | 0,0027 | 0,038 |
+   | `structural_propagation` | Median-Grad | +0,679 | 0,0038 | 0,038 |
+   | `structural_propagation` | ø Total-Grad | +0,676 | 0,0040 | 0,038 |
 
    Die Ausgabe enthält `p_bonferroni`, `p_fdr` sowie `survives_bonferroni` und
    `survives_fdr`, damit das nachprüfbar ist.
